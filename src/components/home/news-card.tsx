@@ -1,5 +1,6 @@
 import React from "react";
 import { NewsCardProps } from "@/types/news-card-type";
+import Image from "next/image";
 
 const NewsCard: React.FC<NewsCardProps> = ({
   source,
@@ -9,7 +10,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
   imageUrl,
 }) => {
   return (
-    <div className="border-gray-200 first:p-4 pt-0 px-2 sm:px-4 pb-4 cursor-pointer">
+    <a
+      href="#"
+      target="blank"
+      className="border-gray-200 block first:p-4 pt-0 px-2 sm:px-4 pb-4 cursor-pointer"
+    >
       <div className="flex">
         <div className="flex-1 pr-2 sm:pr-4">
           <div className="flex items-center mb-1">
@@ -23,11 +28,13 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </div>
 
         {imageUrl && (
-          <div className="w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4">
-            <img
+          <div className="relative w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4 bg-gray-100 rounded-md overflow-hidden">
+            <Image
               src={imageUrl}
               alt={title}
-              className="w-full h-full object-cover rounded-md"
+              fill
+              style={{ objectFit: "contain" }}
+              sizes="(max-width: 640px) 100px, 200px"
             />
           </div>
         )}
@@ -42,7 +49,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </a>
   );
 };
 

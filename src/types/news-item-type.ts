@@ -3,9 +3,10 @@ export type NewsItem = {
   title: string;
   timeAgo: string;
   author?: string;
-  imageUrl?: string;
+  imageUrl: string;
   category?: string;
   location?: string;
+  url: string;
 };
 
 export interface NewsFeedProps {
