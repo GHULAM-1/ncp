@@ -291,6 +291,7 @@ html {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* }
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -358,7 +359,7 @@ html {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
+} */
 
 @layer base {
   * {
@@ -368,3 +369,12 @@ html {
     @apply bg-background text-foreground;
   }
 }
+/* :root[data-theme="light"] {
+  background-color: // light bg color
+  color:  // light content color
+}
+
+:root[data-theme="dark"] {
+  background-color:  // dark bg color
+  color:  // dark content color
+} */

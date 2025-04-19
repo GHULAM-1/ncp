@@ -50,6 +50,7 @@ export async function getNewsItems(): Promise<NewsItem[]> {
       category: validCategory,
       location: undefined,
       url: item.link || "",
+      link: item.link || "",
     };
   });
 }
