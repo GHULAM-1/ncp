@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { NewsCardProps } from "@/types/news-card-type";
 import Image from "next/image";
 import DisqusComments from "../config/disqus-comments";
+import ShareButton from "./share-button";
 
 const NewsCard: React.FC<NewsCardProps> = ({
   source,
@@ -12,63 +13,60 @@ const NewsCard: React.FC<NewsCardProps> = ({
   imageUrl,
   link,
 }) => {
-  //STATES
   const [showComments, setShowComments] = useState(false);
 
-  const post = {
-    slug: link,
-    title,
-  };
+  const post = { slug: link, title };
 
   return (
-    <div className="border-b border-gray-200 block p-4  px-2 sm:px-4 pb-4">
+    <div className="border-b border-gray-200 p-4 sm:p-6">
       <a
         href={link}
         target="_blank"
         rel="noopener noreferrer"
         className="block"
       >
-        <div className="flex">
-          <div className="flex-1 pr-2 sm:pr-4">
-            <div className="flex items-center mb-1">
-              <span className="text-xs sm:text-sm font-medium text-gray-900">
-                {source}
-              </span>
-            </div>
-            <h3 className="text-gray-900 text-lg sm:text-xl font-medium mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row">
+          <div className="flex-1 pr-0 sm:pr-4 mb-4 sm:mb-0">
+            <span className="text-xs sm:text-sm font-medium text-gray-900">
+              {source}
+            </span>
+            <h3 className="mt-1 text-gray-900 text-lg sm:text-xl font-semibold">
               {title}
             </h3>
           </div>
           {imageUrl && (
-            <div className="relative flex-none w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4 bg-gray-100 rounded-md overflow-hidden">
+            <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gray-100 rounded-md overflow-hidden">
               <Image
                 src={imageUrl}
                 alt={title}
                 fill
                 style={{ objectFit: "cover" }}
-                sizes="(max-width: 640px) 100px, 200px"
+                sizes="(max-width: 640px) 100vw, 200px"
               />
             </div>
           )}
         </div>
       </a>
 
-      <div className="flex items-center justify-between text-xs sm:text-sm   text-gray-600">
-        <div className="flex items-center justify-center">
-          <div>{timeAgo}</div>
+      <div className="mt-3 flex items-center justify-between text-gray-600 text-xs sm:text-sm">
+        <div className="flex items-center">
+          <span>{timeAgo}</span>
           {author && (
-            <div className="flex items-center justify-center ml-2">
-              <span className="mx-1">•</span>
+            <>
+              <span className="mx-2">•</span>
               <span>By {author}</span>
-            </div>
+            </>
           )}
         </div>
-        <button
-          onClick={() => setShowComments((v) => !v)}
-          className="mt-2 mb-4 inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
-        >
-          {showComments ? "Close Comments" : "Show Comments"}
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setShowComments((v) => !v)}
+            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+          >
+            {showComments ? "Close Comments" : "Show Comments"}
+          </button>
+          <ShareButton url={link} title={title} />
+        </div>
       </div>
 
       {showComments && (
