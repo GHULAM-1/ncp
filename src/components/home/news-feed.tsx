@@ -20,21 +20,20 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
   const [loading, setLoading] = useState(false);
   const page = useRef(1);
   const loaderRef = useRef<HTMLDivElement | null>(null);
+
   //HANDLERS
   const loadMore = useCallback(() => {
     if (loading) return;
     if (displayed.length >= newsItems.length) return;
 
     setLoading(true);
-    setTimeout(() => {
-      const next = newsItems.slice(
-        page.current * PAGE_SIZE,
-        (page.current + 1) * PAGE_SIZE
-      );
-      setDisplayed((prev) => [...prev, ...next]);
-      page.current += 1;
-      setLoading(false);
-    }, 1500);
+    const next = newsItems.slice(
+      page.current * PAGE_SIZE,
+      (page.current + 1) * PAGE_SIZE
+    );
+    setDisplayed((prev) => [...prev, ...next]);
+    page.current += 1;
+    setLoading(false);
   }, [displayed.length, loading, newsItems]);
 
   useEffect(() => {
@@ -58,8 +57,8 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
       </div>
 
       <div className="shadow-sm rounded-2xl overflow-hidden">
-        {displayed.map((item, idx) => (
-          <NewsCard key={idx} {...item} />
+        {displayed.map((item) => (
+          <NewsCard key={item.slug} {...item} />
         ))}
       </div>
 

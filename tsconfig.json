@@ -27,8 +27,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/components/DiscourseForum.jsx",
-    "src/components/DiscourseForum.tsx"
+    "src/components/config/disqus-comments.tsx"
   ],
   "exclude": ["node_modules"]
 }

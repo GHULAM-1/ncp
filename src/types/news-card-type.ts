@@ -4,4 +4,6 @@ export interface NewsCardProps {
   timeAgo: string;
   author?: string;
   imageUrl?: string;
+  slug: string;
+  link: string;
 }

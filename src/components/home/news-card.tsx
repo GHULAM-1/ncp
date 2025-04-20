@@ -1,6 +1,8 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import { NewsCardProps } from "@/types/news-card-type";
 import Image from "next/image";
+import DisqusComments from "../config/disqus-comments";
 
 const NewsCard: React.FC<NewsCardProps> = ({
   source,
@@ -8,48 +10,73 @@ const NewsCard: React.FC<NewsCardProps> = ({
   timeAgo,
   author,
   imageUrl,
+  link,
 }) => {
+  //STATES
+  const [showComments, setShowComments] = useState(false);
+
+  const post = {
+    slug: link,
+    title,
+  };
+
   return (
-    <a
-      href="#"
-      target="blank"
-      className="border-gray-200 block first:p-4 pt-0 px-2 sm:px-4 pb-4 cursor-pointer"
-    >
-      <div className="flex">
-        <div className="flex-1 pr-2 sm:pr-4">
-          <div className="flex items-center mb-1">
-            <span className="text-xs sm:text-sm font-medium text-gray-900">
-              {source}
-            </span>
+    <div className="border-b border-gray-200 block p-4  px-2 sm:px-4 pb-4">
+      <a
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
+        <div className="flex">
+          <div className="flex-1 pr-2 sm:pr-4">
+            <div className="flex items-center mb-1">
+              <span className="text-xs sm:text-sm font-medium text-gray-900">
+                {source}
+              </span>
+            </div>
+            <h3 className="text-gray-900 text-lg sm:text-xl font-medium mb-3 sm:mb-4">
+              {title}
+            </h3>
           </div>
-          <h3 className="text-gray-900 text-lg sm:text-xl font-medium mb-3 sm:mb-4">
-            {title}
-          </h3>
+          {imageUrl && (
+            <div className="relative flex-none w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4 bg-gray-100 rounded-md overflow-hidden">
+              <Image
+                src={imageUrl}
+                alt={title}
+                fill
+                style={{ objectFit: "cover" }}
+                sizes="(max-width: 640px) 100px, 200px"
+              />
+            </div>
+          )}
         </div>
+      </a>
 
-        {imageUrl && (
-          <div className="relative w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4 bg-gray-100 rounded-md overflow-hidden">
-            <Image
-              src={imageUrl}
-              alt={title}
-              fill
-              style={{ objectFit: "contain" }}
-              sizes="(max-width: 640px) 100px, 200px"
-            />
-          </div>
-        )}
+      <div className="flex items-center justify-between text-xs sm:text-sm   text-gray-600">
+        <div className="flex items-center justify-center">
+          <div>{timeAgo}</div>
+          {author && (
+            <div className="flex items-center justify-center ml-2">
+              <span className="mx-1">•</span>
+              <span>By {author}</span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => setShowComments((v) => !v)}
+          className="mt-2 mb-4 inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+        >
+          {showComments ? "Close Comments" : "Show Comments"}
+        </button>
       </div>
 
-      <div className="flex items-center text-xs sm:text-sm border-b pb-3 sm:pb-4 text-gray-600">
-        <span>{timeAgo}</span>
-        {author && (
-          <div className="flex items-center justify-center ml-2">
-            <span className="mx-1">•</span>
-            <span>By {author}</span>
-          </div>
-        )}
-      </div>
-    </a>
+      {showComments && (
+        <div className="mt-4 border-t pt-4">
+          <DisqusComments post={post} key={post.slug} />
+        </div>
+      )}
+    </div>
   );
 };
 
