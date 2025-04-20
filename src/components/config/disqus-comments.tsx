@@ -1,37 +1,23 @@
-import { DiscussionEmbed } from "disqus-react";
-import React, { useEffect } from "react";
-import { Post, DisqusCommentsProps } from "@/types/disqus-prop-types";
-const DisqusComments: React.FC<DisqusCommentsProps> = ({
-  post,
-  onCommentCountChange,
-}) => {
-  const disqusShortname = "npc-5";
-  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+"use client";
 
+import React from "react";
+import { DiscussionEmbed } from "disqus-react";
+import { DisqusCommentsProps } from "@/types/disqus-comment-prop-types";
+
+const DisqusComments: React.FC<DisqusCommentsProps> = ({ post }) => {
   const disqusConfig = {
-    url: pageUrl,
+    url: post.slug,
     identifier: post.slug,
     title: post.title,
   };
 
-  useEffect(() => {
-    if (!onCommentCountChange) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      if (
-        typeof event.data === "object" &&
-        event.data.type === "disqus.count" &&
-        typeof event.data.count === "number"
-      ) {
-        onCommentCountChange(event.data.count);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [onCommentCountChange]);
-
-  return <DiscussionEmbed shortname={disqusShortname} config={disqusConfig} />;
+  return (
+    <DiscussionEmbed
+      shortname="npc-5"
+      config={disqusConfig}
+      key={disqusConfig.identifier}
+    />
+  );
 };
 
 export default DisqusComments;

@@ -12,6 +12,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
   imageUrl,
   link,
 }) => {
+  //STATES
   const [showComments, setShowComments] = useState(false);
 
   const post = {
@@ -39,12 +40,12 @@ const NewsCard: React.FC<NewsCardProps> = ({
             </h3>
           </div>
           {imageUrl && (
-            <div className="relative w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4 bg-gray-100 rounded-md overflow-hidden">
+            <div className="relative flex-none w-[100px] h-20 sm:w-[200px] sm:h-28 ml-2 sm:ml-4 bg-gray-100 rounded-md overflow-hidden">
               <Image
                 src={imageUrl}
                 alt={title}
                 fill
-                style={{ objectFit: "contain" }}
+                style={{ objectFit: "cover" }}
                 sizes="(max-width: 640px) 100px, 200px"
               />
             </div>
@@ -53,13 +54,15 @@ const NewsCard: React.FC<NewsCardProps> = ({
       </a>
 
       <div className="flex items-center justify-between text-xs sm:text-sm   text-gray-600">
-        <span>{timeAgo}</span>
-        {author && (
-          <div className="flex items-center justify-center ml-2">
-            <span className="mx-1">•</span>
-            <span>By {author}</span>
-          </div>
-        )}
+        <div className="flex items-center justify-center">
+          <div>{timeAgo}</div>
+          {author && (
+            <div className="flex items-center justify-center ml-2">
+              <span className="mx-1">•</span>
+              <span>By {author}</span>
+            </div>
+          )}
+        </div>
         <button
           onClick={() => setShowComments((v) => !v)}
           className="mt-2 mb-4 inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
@@ -70,7 +73,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
       {showComments && (
         <div className="mt-4 border-t pt-4">
-          <DisqusComments post={post} />
+          <DisqusComments post={post} key={post.slug} />
         </div>
       )}
     </div>
