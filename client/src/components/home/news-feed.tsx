@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import LocationSelector from "./location-selector";
 import LocationChip from "./location-chip";
@@ -12,8 +11,8 @@ interface NewsFeedProps {
 }
 
 export default function NewsFeed({ newsItems }: NewsFeedProps) {
-  const PAGE_SIZE = 10;
-  //STATES
+  const PAGE_SIZE = 6;
+  // STATES
   const [displayed, setDisplayed] = useState(() =>
     newsItems.slice(0, PAGE_SIZE)
   );
@@ -21,19 +20,21 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
   const page = useRef(1);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  //HANDLERS
+  // HANDLERS (Delay Added)
   const loadMore = useCallback(() => {
     if (loading) return;
     if (displayed.length >= newsItems.length) return;
 
     setLoading(true);
-    const next = newsItems.slice(
-      page.current * PAGE_SIZE,
-      (page.current + 1) * PAGE_SIZE
-    );
-    setDisplayed((prev) => [...prev, ...next]);
-    page.current += 1;
-    setLoading(false);
+    setTimeout(() => {
+      const next = newsItems.slice(
+        page.current * PAGE_SIZE,
+        (page.current + 1) * PAGE_SIZE
+      );
+      setDisplayed((prev) => [...prev, ...next]);
+      page.current += 1;
+      setLoading(false);
+    }, 1000);
   }, [displayed.length, loading, newsItems]);
 
   useEffect(() => {
