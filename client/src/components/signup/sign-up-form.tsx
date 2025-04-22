@@ -1,17 +1,19 @@
 "use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Icon from "../svg-icon";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
+import { register, googleAuthUrl } from "@/api/auth/api";
 import { SocialButton } from "../social-button";
-import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { register } from "@/api/auth/api";
-import { googleAuthUrl } from "@/api/auth/api"; // Import the Google auth URL
-import { toast } from "sonner";
-
+import Icon from "../svg-icon";
+import { useForm } from "react-hook-form";
+import { SignUpInputs } from "@/types/sign-up-types";
 export function SignUpForm({
   className,
   ...props
@@ -20,57 +22,50 @@ export function SignUpForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<SignUpInputs>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const handleSubmit = async (values: SignUpInputs) => {
     setIsSubmitting(true);
     setError(null);
-  
-    // Get form data
-    const form = e.target as HTMLFormElement;
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-    const password = (form.elements.namedItem('password') as HTMLInputElement).value;
-    
-    // Generating a name from email if not provided
-    const name = email.split('@')[0];
-  
+
+    const { email, password } = values;
+    const name = email.split("@")[0];
+
     try {
-      // Call the register API function
       const response = await register({ name, email, password });
-      
-      // Store token in localStorage
-      localStorage.setItem('token', response.token);
-      
-      // Optionally store user data
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      // Show success message
+
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
+
       toast.success("Registration successful");
-      
-      // Redirect to dashboard or home
       router.push("/");
     } catch (error) {
       console.error("Registration error:", error);
-      setError(error instanceof Error ? error.message : "Failed to register. Please try again.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to register. Please try again."
+      );
       toast.error("Registration failed");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Function to handle Google OAuth
   const handleGoogleSignUp = () => {
-    // Store current URL in localStorage before redirecting
-    localStorage.setItem('authRedirectUrl', window.location.pathname);
-    
-    // Redirect to Google OAuth endpoint
+    localStorage.setItem("authRedirectUrl", window.location.pathname);
     window.location.href = googleAuthUrl;
   };
 
   return (
     <div
       className={cn(
-        "w-full max-w-[830px] mx-auto px-4",
-        "sm:px-6 md:px-8",
+        "w-full max-w-[830px] mx-auto px-4 sm:px-6 md:px-8",
         className
       )}
       {...props}
@@ -85,44 +80,65 @@ export function SignUpForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <Label
-            htmlFor="email"
-            className="text-sm sm:text-base font-medium text-gray-700"
-          ></Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Email address"
-            required
-            className="w-full h-12 sm:h-14 text-base sm:text-lg px-3 border  rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            disabled={isSubmitting}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="email"
+                  className="text-sm sm:text-base font-medium text-gray-700"
+                >
+                  Email
+                </Label>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="Email address"
+                    disabled={isSubmitting}
+                    className="h-12 sm:h-14 text-base sm:text-lg"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
-        <div className="space-y-1">
-          <Label
-            htmlFor="password"
-            className="text-sm sm:text-base font-medium text-gray-700"
-          ></Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Password"
-            required
-            className="w-full h-12 sm:h-14 text-base sm:text-lg px-3 border  rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            disabled={isSubmitting}
-          />
-        </div>
 
-        <Button
-          type="submit"
-          className="w-full h-12 sm:h-14 text-lg sm:text-xl bg-[#33a47d] hover:bg-emerald-700 text-white rounded-md transition-colors"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Creating account..." : "Continue"}
-        </Button>
-      </form>
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="password"
+                  className="text-sm sm:text-base font-medium text-gray-700"
+                >
+                  Password
+                </Label>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    disabled={isSubmitting}
+                    className="h-12 sm:h-14 text-base sm:text-lg"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <Button
+            type="submit"
+            className="w-full h-12 sm:h-14 text-lg sm:text-xl bg-[#33a47d] hover:bg-emerald-700 text-white rounded-md transition-colors"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating account..." : "Continue"}
+          </Button>
+        </form>
+      </Form>
 
       <p className="text-center mt-6 sm:mt-8 mb-2 text-base sm:text-lg text-gray-600">
         Already have an account?{" "}

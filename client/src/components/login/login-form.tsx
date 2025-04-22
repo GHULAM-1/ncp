@@ -1,64 +1,54 @@
 "use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
+import { login, googleAuthUrl } from "@/api/auth/api";
+import { toast } from "sonner";
 import Icon from "../svg-icon";
 import { SocialButton } from "../social-button";
-import { useState } from "react";
-import { login } from "@/api/auth/api"; 
-import { googleAuthUrl } from "@/api/auth/api"; 
-import { toast } from "sonner";
-
+import { LoginInputs } from "@/types/log-in-types";
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const form = useForm<LoginInputs>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  //HANDLERS
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: LoginInputs) => {
     setIsSubmitting(true);
-
-    // Get form data
-    const form = e.target as HTMLFormElement;
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-    const password = (form.elements.namedItem('password') as HTMLInputElement).value;
-
     try {
-      // Call the login API function
-      const response = await login({ email, password });
-      
-      // Store token and user data
+      const response = await login(values);
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
       toast.success("Login successful");
-
-      // Redirect to dashboard or home page
       window.location.href = "/";
     } catch (error) {
-      toast.success("Login failed");
       console.error("Login error:", error);
+      toast.error("Login failed");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Function to handle Google OAuth
   const handleGoogleSignIn = () => {
-    // Store current URL in localStorage
     localStorage.setItem("authRedirectUrl", window.location.pathname);
-    
-    // Redirect to Google OAuth endpoint
     window.location.href = googleAuthUrl;
   };
 
   return (
     <div
       className={cn(
-        "w-full max-w-[450px] mx-auto px-4",
-        "sm:px-6 md:px-8",
+        "w-full max-w-[450px] mx-auto px-4 sm:px-6 md:px-8",
         className
       )}
       {...props}
@@ -67,41 +57,67 @@ export function LoginForm({
         Welcome back
       </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <Label
-            htmlFor="email"
-            className="text-sm sm:text-base font-medium text-gray-700"
-          ></Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Email address"
-            required
-            className="w-full h-12 sm:h-14 text-base sm:text-lg px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="email"
+                  className="text-sm sm:text-base font-medium text-gray-700"
+                >
+                  Email
+                </Label>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Email address"
+                    disabled={isSubmitting}
+                    className="w-full h-12 sm:h-14 text-base sm:text-lg"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
-        <div className="space-y-1">
-          <Label
-            htmlFor="password"
-            className="text-sm sm:text-base font-medium text-gray-700"
-          ></Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Password"
-            required
-            className="w-full h-12 sm:h-14 text-base sm:text-lg px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-          />
-        </div>
 
-        <Button
-          type="submit"
-          className="w-full h-12 sm:h-14 text-lg sm:text-xl bg-[#33a47d] hover:bg-emerald-700 text-white rounded-md transition-colors"
-        >
-          Continue
-        </Button>
-      </form>
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="password"
+                  className="text-sm sm:text-base font-medium text-gray-700"
+                >
+                  Password
+                </Label>
+                <FormControl>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Password"
+                    disabled={isSubmitting}
+                    className="w-full h-12 sm:h-14 text-base sm:text-lg"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <Button
+            type="submit"
+            className="w-full h-12 sm:h-14 text-lg sm:text-xl bg-[#33a47d] hover:bg-emerald-700 text-white rounded-md transition-colors"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Continue"}
+          </Button>
+        </form>
+      </Form>
 
       <p className="text-center mt-6 sm:mt-8 mb-2 text-base sm:text-lg text-gray-600">
         Don&apos;t have an account?{" "}
