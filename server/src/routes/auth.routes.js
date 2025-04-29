@@ -47,19 +47,19 @@ router.get(
   googleCallback
 );
 // Add these routes to your existing auth.routes.js
-router.get(
-  "/facebook",
-  passport.authenticate("facebook", { scope: ["email"] })
-);
+// router.get(
+//   "/facebook",
+//   passport.authenticate("facebook", { scope: ["email"] })
+// );
 
-router.get(
-  "/facebook/callback",
-  passport.authenticate("facebook", {
-    session: false,
-    failureRedirect: "/login",
-  }),
-  facebookCallback
-);
+// router.get(
+//   "/facebook/callback",
+//   passport.authenticate("facebook", {
+//     session: false,
+//     failureRedirect: "/login",
+//   }),
+//   facebookCallback
+// );
 
 router.get("/me", protect, getMe);
 

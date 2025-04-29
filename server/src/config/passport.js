@@ -58,44 +58,44 @@ module.exports = (passport) => {
     )
   );
 
-  passport.use(
-    new FacebookStrategy(
-      {
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: "/api/auth/facebook/callback",
-        profileFields: ["id", "displayName", "photos", "email"],
-      },
-      async (accessToken, refreshToken, profile, done) => {
-        try {
-          // Check if user already exists
-          let user = await User.findOne({ email: profile.emails?.[0]?.value });
+  //   passport.use(
+  //     new FacebookStrategy(
+  //       {
+  //         clientID: process.env.FACEBOOK_APP_ID,
+  //         clientSecret: process.env.FACEBOOK_APP_SECRET,
+  //         callbackURL: "/api/auth/facebook/callback",
+  //         profileFields: ["id", "displayName", "photos", "email"],
+  //       },
+  //       async (accessToken, refreshToken, profile, done) => {
+  //         try {
+  //           // Check if user already exists
+  //           let user = await User.findOne({ email: profile.emails?.[0]?.value });
 
-          if (user) {
-            // If user exists but doesn't have facebookId, update it
-            if (!user.facebookId) {
-              user.facebookId = profile.id;
-              if (!user.avatar && profile.photos?.[0]?.value) {
-                user.avatar = profile.photos[0].value;
-              }
-              await user.save();
-            }
-          } else {
-            // Create new user if doesn't exist
-            user = await User.create({
-              name: profile.displayName,
-              email: profile.emails?.[0]?.value,
-              facebookId: profile.id,
-              avatar: profile.photos?.[0]?.value || "",
-              password: undefined, // No password for social auth
-            });
-          }
+  //           if (user) {
+  //             // If user exists but doesn't have facebookId, update it
+  //             if (!user.facebookId) {
+  //               user.facebookId = profile.id;
+  //               if (!user.avatar && profile.photos?.[0]?.value) {
+  //                 user.avatar = profile.photos[0].value;
+  //               }
+  //               await user.save();
+  //             }
+  //           } else {
+  //             // Create new user if doesn't exist
+  //             user = await User.create({
+  //               name: profile.displayName,
+  //               email: profile.emails?.[0]?.value,
+  //               facebookId: profile.id,
+  //               avatar: profile.photos?.[0]?.value || "",
+  //               password: undefined, // No password for social auth
+  //             });
+  //           }
 
-          return done(null, user);
-        } catch (error) {
-          return done(error, false);
-        }
-      }
-    )
-  );
+  //           return done(null, user);
+  //         } catch (error) {
+  //           return done(error, false);
+  //         }
+  //       }
+  //     )
+  //   );
 };
