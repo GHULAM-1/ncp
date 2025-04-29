@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import LocationSelector from "./location-selector";
 import LocationChip from "./location-chip";
@@ -12,15 +11,16 @@ interface NewsFeedProps {
 }
 
 export default function NewsFeed({ newsItems }: NewsFeedProps) {
-  const PAGE_SIZE = 10;
-  //STATES
+  const PAGE_SIZE = 6;
+  // STATES
   const [displayed, setDisplayed] = useState(() =>
     newsItems.slice(0, PAGE_SIZE)
   );
   const [loading, setLoading] = useState(false);
   const page = useRef(1);
   const loaderRef = useRef<HTMLDivElement | null>(null);
-  //HANDLERS
+
+  // HANDLERS (Delay Added)
   const loadMore = useCallback(() => {
     if (loading) return;
     if (displayed.length >= newsItems.length) return;
@@ -34,7 +34,7 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
       setDisplayed((prev) => [...prev, ...next]);
       page.current += 1;
       setLoading(false);
-    }, 1500);
+    }, 1000);
   }, [displayed.length, loading, newsItems]);
 
   useEffect(() => {
@@ -58,8 +58,8 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
       </div>
 
       <div className="shadow-sm rounded-2xl overflow-hidden">
-        {displayed.map((item, idx) => (
-          <NewsCard key={idx} {...item} />
+        {displayed.map((item) => (
+          <NewsCard key={item.slug} {...item} />
         ))}
       </div>
 
