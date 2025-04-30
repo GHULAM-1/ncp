@@ -29,7 +29,7 @@ const corsOptions = {
     "Access-Control-Request-Headers",
   ],
 };
-
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
