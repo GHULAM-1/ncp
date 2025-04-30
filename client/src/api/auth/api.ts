@@ -57,7 +57,6 @@ const authFetchOptions = {
   },
 };
 
-// Helper function to handle API requests
 const apiRequest = async <T>(
   url: string,
   options: RequestInit,
