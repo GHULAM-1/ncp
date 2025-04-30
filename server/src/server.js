@@ -55,7 +55,9 @@ app.use("/api/users", require("./routes/user.routes"));
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the Authentication API" });
 });
-
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working!" });
+});
 app.use(errorHandler);
 
 app.use((req, res) => {

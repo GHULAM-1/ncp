@@ -150,7 +150,7 @@ export function SignUpForm({
         </Link>
       </p>
 
-      <div className="relative my-6 sm:my-8">
+      {/* <div className="relative my-6 sm:my-8">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-300"></div>
         </div>
@@ -172,7 +172,7 @@ export function SignUpForm({
           provider="Facebook"
           onClick={() => console.log("Facebook login")}
         />
-      </div>
+      </div> */}
     </div>
   );
 }
