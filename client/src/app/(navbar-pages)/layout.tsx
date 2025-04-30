@@ -4,6 +4,7 @@ import "../globals.css";
 import Header from "@/components/header";
 import Navigation from "@/components/navigation";
 import { AuthProvider } from "@/components/context/AuthContext";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -21,12 +22,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${roboto.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${roboto.variable} antialiased bg-white dark:bg-[#282a2e]`}
+      >
         <AuthProvider>
-          <Header />
-          <Navigation />
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Header />
+            <Navigation />
+            {children}
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

@@ -14,11 +14,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
   link,
 }) => {
   const [showComments, setShowComments] = useState(false);
-
   const post = { slug: link, title };
 
   return (
-    <div className="border-b border-gray-200 p-4 sm:p-6">
+    <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2125] p-4 sm:p-6">
       <a
         href={link}
         target="_blank"
@@ -27,15 +26,15 @@ const NewsCard: React.FC<NewsCardProps> = ({
       >
         <div className="flex flex-col sm:flex-row">
           <div className="flex-1 pr-0 sm:pr-4 mb-4 sm:mb-0">
-            <span className="text-xs sm:text-sm font-medium text-gray-900">
+            <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
               {source}
             </span>
-            <h3 className="mt-1 text-gray-900 text-lg sm:text-xl font-semibold">
+            <h3 className="mt-1 text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
               {title}
             </h3>
           </div>
           {imageUrl && (
-            <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gray-100 rounded-md overflow-hidden">
+            <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden">
               <Image
                 src={imageUrl}
                 alt={title}
@@ -48,7 +47,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </div>
       </a>
 
-      <div className="mt-3 flex items-center justify-between text-gray-600 text-xs sm:text-sm">
+      <div className="mt-3 flex items-center justify-between text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
         <div className="flex items-center">
           <span>{timeAgo}</span>
           {author && (
@@ -61,7 +60,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowComments((v) => !v)}
-            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+            className="px-3 py-1 text-sm rounded transition 
+                       bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white"
           >
             {showComments ? "Close Comments" : "Show Comments"}
           </button>
@@ -70,7 +70,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
       </div>
 
       {showComments && (
-        <div className="mt-4 border-t pt-4">
+        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
           <DisqusComments post={post} key={post.slug} />
         </div>
       )}
