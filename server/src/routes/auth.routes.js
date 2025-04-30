@@ -46,11 +46,11 @@ router.get(
   passport.authenticate('facebook', { scope: ['email'] })
 );
 
-router.get(
-  '/facebook/callback',
-  passport.authenticate('facebook', { session: false, failureRedirect: '/login' }),
-  facebookCallback
-);
+// router.get(
+//   '/facebook/callback',
+//   passport.authenticate('facebook', { session: false, failureRedirect: '/login' }),
+//   facebookCallback
+// );
 
 router.get('/me', protect, getMe);
 
