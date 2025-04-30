@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import React from "react";
-
-export default function page() {
-  return <div>Forum</div>;
-}
-=======
 import DiscourseForum from "../../../components/DiscourseForum";
 export default function Page() {
   return (
@@ -14,4 +7,3 @@ export default function Page() {
     </main>
   );
 }
->>>>>>> stagging
