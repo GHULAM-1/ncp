@@ -58,14 +58,16 @@ const NewsCard: React.FC<NewsCardProps> = ({
           )}
         </div>
         <div className="flex items-center space-x-2">
+        <ShareButton url={link} title={title} />
+
           <button
             onClick={() => setShowComments((v) => !v)}
             className="px-3 py-1 text-sm rounded transition 
-                       bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white"
+            cursor-pointer
+                       bg-white hover:bg-gray-300 dark:bg-red-600 dark:hover:bg-blue-800 text-black border border-gray-300 dark:border-gray-700"
           >
             {showComments ? "Close Comments" : "Show Comments"}
           </button>
-          <ShareButton url={link} title={title} />
         </div>
       </div>
 
