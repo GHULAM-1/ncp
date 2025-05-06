@@ -1,6 +1,3 @@
-// api/authApi.ts
-
-// Types
 interface UserData {
   name: string;
   email: string;
@@ -46,10 +43,8 @@ interface ErrorResponse {
   }>;
 }
 
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
-// Global fetch options for authentication requests
 const authFetchOptions = {
   credentials: "include" as RequestCredentials,
   headers: {

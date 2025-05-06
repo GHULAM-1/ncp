@@ -13,7 +13,7 @@ const NavItem: React.FC<NavItemProps> = ({ label, active }) => {
         {label}
       </span>
       {active && (
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-[#87b6f4] rounded-t-sm"></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-[#87b6f4] rounded-t-[4px]"></div>
       )}
     </div>
   );

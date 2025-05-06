@@ -10,11 +10,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   //HANDLERS
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ title, url }).catch(() => setIsOpen(true));
-    } else {
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   };
 
   return (
