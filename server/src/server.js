@@ -14,8 +14,9 @@ connectDB();
 
 const app = express();
 
+
 const corsOptions = {
-  origin: ["http://localhost:3000"],
+  origin: ["http://localhost:3000", "https://ncp-client.vercel.app"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
@@ -28,7 +29,7 @@ const corsOptions = {
     "Access-Control-Request-Headers",
   ],
 };
-
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -55,7 +56,9 @@ app.use("/api/users", require("./routes/user.routes"));
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the Authentication API" });
 });
-
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working!" });
+});
 app.use(errorHandler);
 
 app.use((req, res) => {
@@ -67,3 +70,5 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
+
+module.exports = app;
