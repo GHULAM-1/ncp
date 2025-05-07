@@ -60,6 +60,7 @@ export default function RootLayout({
         />
       </head>
       <body
+        suppressHydrationWarning
         className={`${roboto.variable} antialiased bg-white dark:bg-[#282a2e]`}
       >
         <AuthProvider>

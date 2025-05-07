@@ -17,12 +17,20 @@ const NewsCard: React.FC<NewsCardProps> = ({
   const [showComments, setShowComments] = useState(false);
   const post = { slug: link, title };
 
-  const handleShare = () => {
-    navigator.share({
-      title,
-      text: title,
-      url: link,
-    });
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text: title,
+          url: link,
+        });
+      } catch (error) {
+        console.error("Sharing failed:", error);
+      }
+    } else {
+      alert("Sharing is not supported on this browser.");
+    }
   };
 
   return (
@@ -80,13 +88,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
             </div>
 
             <div className="flex md:hidden items-center gap-2">
-              <button
-                onClick={handleShare}
-                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                title="Share"
-              >
-                <Send size={16} className="text-gray-600 dark:text-gray-300" />
-              </button>
+              <ShareButton url={link} title={title} />
+
               <button
                 onClick={() => setShowComments((prev) => !prev)}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
