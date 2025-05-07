@@ -1,42 +1,49 @@
 "use client";
 
-import * as React from "react";
-import { Moon, Sun } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Moon, Sun } from "lucide-react";
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  //STATES
+  const [mounted, setMounted] = useState(false);
+  //HANDLERS
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const isDark = theme === "dark";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
-          <div className="relative h-[1.2rem] w-[1.2rem]">
-            <Sun className="absolute h-full w-full rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-full w-full rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </div>
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        Dark mode
+      </span>
+      <button
+        onClick={() => setTheme(isDark ? "light" : "dark")}
+        className={`relative w-14 h-7 rounded-full px-1 flex items-center transition-colors duration-300 ${
+          isDark ? "bg-gray-700" : "bg-yellow-300"
+        }`}
+      >
+        <div
+          className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 transform ${
+            isDark ? "translate-x-7" : "translate-x-0"
+          }`}
+        />
+        <Sun
+          className={`w-4 h-4 absolute left-1 text-yellow-500 transition-opacity ${
+            isDark ? "opacity-0" : "opacity-100"
+          }`}
+        />
+        <Moon
+          className={`w-4 h-4 absolute right-1 text-white transition-opacity ${
+            isDark ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </button>
+    </div>
   );
 }

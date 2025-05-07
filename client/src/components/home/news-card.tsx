@@ -4,6 +4,7 @@ import { NewsCardProps } from "@/types/news-card-type";
 import Image from "next/image";
 import DisqusComments from "../config/disqus-comments";
 import ShareButton from "./share-button";
+import { Send, MessageSquare } from "lucide-react";
 
 const NewsCard: React.FC<NewsCardProps> = ({
   source,
@@ -16,10 +17,17 @@ const NewsCard: React.FC<NewsCardProps> = ({
   const [showComments, setShowComments] = useState(false);
   const post = { slug: link, title };
 
+  const handleShare = () => {
+    navigator.share({
+      title,
+      text: title,
+      url: link,
+    });
+  };
+
   return (
     <div className="bg-white dark:bg-[#1f2125] px-4">
       <div className="border-b border-gray-200 dark:border-gray-700 py-4">
-        {" "}
         <a
           href={link}
           target="_blank"
@@ -31,7 +39,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
               <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-100">
                 {source}
               </span>
-              <h3 className="mt-1 text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                 {title}
               </h3>
             </div>
@@ -48,27 +56,51 @@ const NewsCard: React.FC<NewsCardProps> = ({
             )}
           </div>
         </a>
-        <div className="mt-3 flex items-center justify-between text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
-          <div className="flex items-center">
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
+          <div className="flex items-center gap-x-2">
             <span>{timeAgo}</span>
             {author && (
               <>
-                <span className="mx-2">•</span>
+                <span className="hidden md:inline">•</span>
                 <span>By {author}</span>
               </>
             )}
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowComments((v) => !v)}
-              className="px-3 py-1 text-sm rounded transition 
-                       bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white"
-            >
-              {showComments ? "Close Comments" : "Show Comments"}
-            </button>
-            <ShareButton url={link} title={title} />
+
+          <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
+              <ShareButton url={link} title={title} />
+              <button
+                onClick={() => setShowComments((prev) => !prev)}
+                className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+              >
+                {showComments ? "Close Comments" : "Show Comments"}
+              </button>
+            </div>
+
+            <div className="flex md:hidden items-center gap-2">
+              <button
+                onClick={handleShare}
+                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                title="Share"
+              >
+                <Send size={16} className="text-gray-600 dark:text-gray-300" />
+              </button>
+              <button
+                onClick={() => setShowComments((prev) => !prev)}
+                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                title="Comments"
+              >
+                <MessageSquare
+                  size={16}
+                  className="text-gray-600 dark:text-gray-300"
+                />
+              </button>
+            </div>
           </div>
         </div>
+
         {showComments && (
           <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
             <DisqusComments post={post} key={post.slug} />
