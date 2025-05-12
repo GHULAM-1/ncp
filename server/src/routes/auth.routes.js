@@ -53,16 +53,11 @@ router.get(
 // );
 
 // router.get(
-<<<<<<< HEAD
-//   '/facebook/callback',
-//   passport.authenticate('facebook', { session: false, failureRedirect: '/login' }),
-=======
 //   "/facebook/callback",
 //   passport.authenticate("facebook", {
 //     session: false,
 //     failureRedirect: "/login",
 //   }),
->>>>>>> improv/basic-ui-fixes
 //   facebookCallback
 // );
 

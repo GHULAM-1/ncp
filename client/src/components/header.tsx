@@ -20,19 +20,6 @@ const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-<<<<<<< HEAD
-
-  const handleLogout = async () => {
-    try {
-      if (token) {
-        await logout();
-
-        router.push("/login");
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-=======
   const avatarSrc =
     profilePreview ||
     profileImage ||
@@ -81,7 +68,6 @@ const Header: React.FC = () => {
     await logout(token);
     localStorage.removeItem("token");
     router.push("/login");
->>>>>>> stagging
   };
 
   return (
@@ -107,23 +93,6 @@ const Header: React.FC = () => {
               onClick={() => setDropdownOpen((prev) => !prev)}
               className="w-8 h-8 rounded-full overflow-hidden focus:outline-none"
             >
-<<<<<<< HEAD
-              Sign Up 
-              <span className="absolute inset-0 rounded-sm bg-blue-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-            </Link>
-          </>
-        ) : (
-          <button
-            onClick={handleLogout}
-            className="relative px-3 py-1 sm:px-5 sm:py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-sm shadow-sm hover:shadow-md transition-all duration-300 group dark:from-blue-600 dark:to-blue-700"
-          >
-            Logout
-            <span className="absolute inset-0 rounded-sm bg-blue-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-          </button>
-        )}
-      </div>
-    </header>
-=======
               <Image
                 src={avatarSrc}
                 alt="User Avatar"
@@ -193,7 +162,6 @@ const Header: React.FC = () => {
         />
       )}
     </>
->>>>>>> stagging
   );
 };
 
