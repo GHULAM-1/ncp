@@ -19,7 +19,7 @@ interface User {
 
 interface AuthResponse {
   success: boolean;
-  token: string; // still returned, but unused on frontend
+  token: string;
   user: User;
 }
 
@@ -72,7 +72,18 @@ const apiRequest = async <T>(
   }
 };
 
-// Register
+// Add authorization header if token exists
+const withAuth = (token: string, options: RequestInit = {}): RequestInit => {
+  return {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+    },
+  };
+};
+
+// Register a new user
 export const register = async (userData: UserData): Promise<AuthResponse> => {
   return apiRequest<AuthResponse>(
     `${API_URL}/auth/register`,
@@ -85,7 +96,7 @@ export const register = async (userData: UserData): Promise<AuthResponse> => {
   );
 };
 
-// Login
+// Login a user
 export const login = async (
   credentials: Credentials
 ): Promise<AuthResponse> => {
@@ -100,42 +111,36 @@ export const login = async (
   );
 };
 
-// Current user
-export const getCurrentUser = async (): Promise<UserResponse> => {
+// Get current user profile
+export const getCurrentUser = async (token: string): Promise<UserResponse> => {
   return apiRequest<UserResponse>(
     `${API_URL}/auth/me`,
-    {
+    withAuth(token, {
+      ...authFetchOptions,
       method: "GET",
-      credentials: "include",
-    },
-    "Failed to fetch current user"
+    }),
+    "Failed to get user data"
   );
 };
 
-// Logout
-export const logout = async (): Promise<{ success: boolean; data: {} }> => {
+// Logout user
+export const logout = async (
+  token: string
+): Promise<{ success: boolean; data: {} }> => {
   return apiRequest<{ success: boolean; data: {} }>(
     `${API_URL}/auth/logout`,
-    {
+    withAuth(token, {
+      ...authFetchOptions,
       method: "GET",
-      credentials: "include",
-    },
+    }),
     "Logout failed"
   );
 };
 
-// OAuth
+// Google OAuth login URL
 export const googleAuthUrl = `${API_URL}/auth/google`;
 
-// Admin: secured with token (you can switch to cookie-secured if backend supports it)
-const withAuth = (token: string, options: RequestInit = {}): RequestInit => ({
-  ...options,
-  headers: {
-    ...options.headers,
-    Authorization: `Bearer ${token}`,
-  },
-});
-
+// Admin: Get all users (admin only)
 export const getAllUsers = async (token: string): Promise<UsersResponse> => {
   return apiRequest<UsersResponse>(
     `${API_URL}/users`,
@@ -147,6 +152,7 @@ export const getAllUsers = async (token: string): Promise<UsersResponse> => {
   );
 };
 
+// Admin: Get user by ID (admin only)
 export const getUserById = async (
   token: string,
   userId: string
@@ -161,6 +167,7 @@ export const getUserById = async (
   );
 };
 
+// Admin: Update user (admin only)
 export const updateUser = async (
   token: string,
   userId: string,
@@ -177,6 +184,7 @@ export const updateUser = async (
   );
 };
 
+// Admin: Delete user (admin only)
 export const deleteUser = async (
   token: string,
   userId: string

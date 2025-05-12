@@ -25,9 +25,8 @@ exports.register = async (req, res, next) => {
     });
 
     await user.save();
-    res.status(201).json({ success: true, data: user });
 
-    // sendTokenResponse(user, 201, res);
+    sendTokenResponse(user, 201, res);
   } catch (error) {
     next(error);
   }
@@ -81,10 +80,8 @@ exports.logout = (req, res) => {
 
 exports.googleCallback = (req, res) => {
   // Create token
-  const token = jwt.sign({ email: req.user.email }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "90d",
-  });
-  
+  const token = req.user.getSignedJwtToken();
+
   const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
 
   const cookieOptions = {
@@ -122,10 +119,8 @@ exports.googleCallback = (req, res) => {
 };
 
 exports.facebookCallback = (req, res) => {
-  const token = jwt.sign({ email: req.user.email }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "90d",
-  });
-  
+  const token = req.user.getSignedJwtToken();
+
   const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
 
   const cookieOptions = {
@@ -162,18 +157,20 @@ exports.facebookCallback = (req, res) => {
   res.redirect(frontendURL);
 };
 const sendTokenResponse = (user, statusCode, res) => {
-  const payload = { email: user.email };
-  const jwtSecret = process.env.JWT_SECRET || "your_default_secret";
+  const token = user.getSignedJwtToken();
 
-  const token = jwt.sign(payload, jwtSecret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "90d",
-  });
+  let expiresIn = 90;
+  if (process.env.JWT_EXPIRES_IN) {
+    if (process.env.JWT_EXPIRES_IN.endsWith("d")) {
+      expiresIn = parseInt(process.env.JWT_EXPIRES_IN);
+    } else {
+      expiresIn = 90;
+    }
+  }
 
   const options = {
+    expires: new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
-    sameSite: "lax",
-    path: "/",
   };
 
   if (process.env.NODE_ENV === "production") {
@@ -183,6 +180,15 @@ const sendTokenResponse = (user, statusCode, res) => {
   res
     .status(statusCode)
     .cookie("token", token, options)
-    .json({ success: true });
+    .json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+    });
 };
-

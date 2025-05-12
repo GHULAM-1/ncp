@@ -1,7 +1,6 @@
 const express = require('express');
 const { check } = require('express-validator');
-const passport = require("passport");
-const { authorize } = require("../middleware/auth"); // <- see below
+const { protect, authorize } = require('../middleware/auth');
 const router = express.Router();
 const {
   getUsers,
@@ -10,9 +9,8 @@ const {
   deleteUser
 } = require('../controllers/user.controller');
 
-router.use(passport.authenticate("jwt", { session: false }));
-router.use(authorize("admin"));
-
+router.use(protect);
+router.use(authorize('admin'));
 
 router.route('/')
   .get(getUsers);
