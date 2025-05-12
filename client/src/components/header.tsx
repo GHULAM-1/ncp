@@ -10,7 +10,6 @@ import { ProfileModal } from "./profile-modal";
 import Image from "next/image";
 
 const Header: React.FC = () => {
-  //STATES
   const [token, setToken] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
@@ -20,35 +19,46 @@ const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const avatarSrc =
-    profilePreview ||
-    profileImage ||
-    (username
-      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          username[0].toUpperCase()
-        )}&background=3b82f6&color=ffffff`
-      : "/Icons/profile-picture.jpg");
-  //HANDLERS
+  // 1️⃣ Load token, username, and any saved preview/image from localStorage
   useEffect(() => {
     const tok = localStorage.getItem("token");
     if (tok) setToken(tok);
 
-    const userString = localStorage.getItem("user");
-    if (userString) {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
       try {
-        const userObj = JSON.parse(userString);
-        setUsername(userObj.username || userObj.name || "");
-      } catch (e) {
-        console.error("Failed to parse `user` from localStorage:", e);
-      }
+        const u = JSON.parse(userStr);
+        setUsername(u.username || u.name || "");
+      } catch {}
     }
-
     const preview = localStorage.getItem("profilePreview");
     if (preview) setProfilePreview(preview);
 
     const stored = localStorage.getItem("profileImage");
     if (stored) setProfileImage(stored);
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchAvatar = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const data = await res.json();
+        if (data.avatar) {
+          setProfileImage(data.avatar);
+          localStorage.setItem("profileImage", data.avatar);
+        }
+      } catch (err) {
+        console.error("Error loading avatar:", err);
+      }
+    };
+
+    fetchAvatar();
+  }, [token]);
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -70,6 +80,16 @@ const Header: React.FC = () => {
     router.push("/login");
   };
 
+  // 3️⃣ Build avatarSrc: preview → DB image → initials → default
+  const avatarSrc =
+    profilePreview ||
+    profileImage ||
+    (username
+      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          username[0].toUpperCase()
+        )}&background=3b82f6&color=ffffff`
+      : "/Icons/profile-picture.jpg");
+
   return (
     <>
       <header className="sticky top-0 z-50 p-2 mb-4 bg-white dark:bg-[#1f2125] border-b border-gray-200 dark:border-gray-700">
@@ -84,9 +104,7 @@ const Header: React.FC = () => {
             />
           </h1>
 
-          <div className="flex items-end h-full">
-            <Navigation />
-          </div>
+          <Navigation />
 
           <div className="relative" ref={dropdownRef}>
             <button
@@ -142,12 +160,8 @@ const Header: React.FC = () => {
                       </Link>
                     </>
                   )}
-
                   <hr className="my-2 border-gray-200 dark:border-gray-700" />
-
-                  <div className="px-4 py-2">
-                    <ModeToggle />
-                  </div>
+                  <ModeToggle />
                 </div>
               </div>
             )}
