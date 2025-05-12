@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Share2 } from "lucide-react";
+import { Send, Share2 } from "lucide-react";
 import ShareModal from "./share-model";
 import { ShareButtonProps } from "@/types/share-button-prop";
 const ShareButton: React.FC<ShareButtonProps> = ({
@@ -10,21 +10,25 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   //HANDLERS
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ title, url }).catch(() => setIsOpen(true));
-    } else {
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   };
 
   return (
     <>
       <button
         onClick={handleShare}
-        className="p-2 rounded-full hover:bg-gray-200 transition"
+        className="px-3 py-2 border hidden md:flex border-gray-300 text-black rounded transitio hover:cursor-pointer 
+             hover:bg-gray-200 
+             dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
         aria-label="Share"
       >
-        <Share2 className="w-5 h-5 text-gray-600" />
+        Share
+      </button>
+      <button
+        onClick={handleShare}
+        className="p-2 rounded md:hidden hover:bg-gray-200 dark:hover:bg-gray-700"
+      >
+        <Send size={16} className="text-gray-600 dark:text-gray-300" />
       </button>
 
       {isOpen && (

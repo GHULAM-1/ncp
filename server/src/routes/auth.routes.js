@@ -1,59 +1,73 @@
-const express = require('express');
-const { check } = require('express-validator');
-const { protect } = require('../middleware/auth');
-const passport = require('passport');
+const express = require("express");
+const { check } = require("express-validator");
+const { protect } = require("../middleware/auth");
+const passport = require("passport");
 const router = express.Router();
 const {
   register,
   login,
   getMe,
   logout,
-  googleCallback
-} = require('../controllers/auth.controller');
+  googleCallback,
+} = require("../controllers/auth.controller");
 
 router.post(
-  '/register',
+  "/register",
   [
-    check('name', 'Name is required').not().isEmpty(),
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
+    check("name", "Name is required").not().isEmpty(),
+    check("email", "Please include a valid email").isEmail(),
+    check(
+      "password",
+      "Please enter a password with 6 or more characters"
+    ).isLength({ min: 6 }),
   ],
   register
 );
 
 router.post(
-  '/login',
+  "/login",
   [
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Password is required').exists()
+    check("email", "Please include a valid email").isEmail(),
+    check("password", "Password is required").exists(),
   ],
   login
 );
 
 router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 router.get(
-  '/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
   googleCallback
 );
 // Add these routes to your existing auth.routes.js
-router.get(
-  '/facebook',
-  passport.authenticate('facebook', { scope: ['email'] })
-);
+// router.get(
+//   "/facebook",
+//   passport.authenticate("facebook", { scope: ["email"] })
+// );
 
 // router.get(
+<<<<<<< HEAD
 //   '/facebook/callback',
 //   passport.authenticate('facebook', { session: false, failureRedirect: '/login' }),
+=======
+//   "/facebook/callback",
+//   passport.authenticate("facebook", {
+//     session: false,
+//     failureRedirect: "/login",
+//   }),
+>>>>>>> improv/basic-ui-fixes
 //   facebookCallback
 // );
 
-router.get('/me', protect, getMe);
+router.get("/me", protect, getMe);
 
-router.get('/logout', logout);
+router.get("/logout", logout);
 
 module.exports = router;

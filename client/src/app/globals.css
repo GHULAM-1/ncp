@@ -410,12 +410,27 @@ html {
     @apply bg-background text-foreground;
   }
 }
-/* :root[data-theme="light"] {
-  background-color: // light bg color
-  color:  // light content color
+:root[data-theme="light"] {
+  background-color: #ffffff; /* white */
+  color: #111827; /* gray-900 */
+}
+html {
+  overflow-y: scroll;
+}
+:root[data-theme="dark"] {
+  background-color: #111827; /* gray-900 */
+  color: #f3f4f6; /* gray-50 */
 }
 
-:root[data-theme="dark"] {
-  background-color:  // dark bg color
-  color:  // dark content color
-} */
+.disqus-wrapper iframe {
+  transition: filter 0.3s ease;
+}
+
+.dark .disqus-wrapper iframe {
+  /* 
+    invert: flips light↔dark
+    hue-rotate: corrects image colors
+    brightness: bumps text back up
+  */
+  filter: invert(1) hue-rotate(180deg) brightness(1.1);
+}
