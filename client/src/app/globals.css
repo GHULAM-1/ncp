@@ -410,7 +410,6 @@ html {
     @apply bg-background text-foreground;
   }
 }
-/* Light theme: white background, dark gray text */
 :root[data-theme="light"] {
   background-color: #ffffff; /* white */
   color: #111827; /* gray-900 */
@@ -418,20 +417,15 @@ html {
 html {
   overflow-y: scroll;
 }
-/* Dark theme: almost-black background, near-white text */
 :root[data-theme="dark"] {
   background-color: #111827; /* gray-900 */
   color: #f3f4f6; /* gray-50 */
 }
 
-/* globals.css */
-
-/* smooth transition when toggling */
 .disqus-wrapper iframe {
   transition: filter 0.3s ease;
 }
 
-/* only in dark mode, invert the colors of the iframe */
 .dark .disqus-wrapper iframe {
   /* 
     invert: flips light↔dark

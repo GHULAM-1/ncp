@@ -1,5 +1,3 @@
-// api/authApi.ts
-
 interface UserData {
   name: string;
   email: string;
@@ -47,7 +45,10 @@ interface ErrorResponse {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+<<<<<<< HEAD
 // Shared fetch options
+=======
+>>>>>>> stagging
 const authFetchOptions = {
   credentials: "include" as RequestCredentials,
   headers: {

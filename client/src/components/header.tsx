@@ -1,16 +1,26 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { HelpCircle } from "lucide-react";
+
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logout } from "../api/auth/api";
 import { ModeToggle } from "./mode-toggle";
+import Navigation from "./navigation";
+import { ProfileModal } from "./profile-modal";
+import Image from "next/image";
 
 const Header: React.FC = () => {
+  //STATES
   const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+<<<<<<< HEAD
 
   const handleLogout = async () => {
     try {
@@ -22,37 +32,82 @@ const Header: React.FC = () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
+=======
+  const avatarSrc =
+    profilePreview ||
+    profileImage ||
+    (username
+      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          username[0].toUpperCase()
+        )}&background=3b82f6&color=ffffff`
+      : "/Icons/profile-picture.jpg");
+  //HANDLERS
+  useEffect(() => {
+    const tok = localStorage.getItem("token");
+    if (tok) setToken(tok);
+
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      try {
+        const userObj = JSON.parse(userString);
+        setUsername(userObj.username || userObj.name || "");
+      } catch (e) {
+        console.error("Failed to parse `user` from localStorage:", e);
+      }
+    }
+
+    const preview = localStorage.getItem("profilePreview");
+    if (preview) setProfilePreview(preview);
+
+    const stored = localStorage.getItem("profileImage");
+    if (stored) setProfileImage(stored);
+  }, []);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    if (!token) return;
+    await logout(token);
+    localStorage.removeItem("token");
+    router.push("/login");
+>>>>>>> stagging
   };
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 sm:px-6 sm:py-4  border-gray-200 bg-white dark:bg-[#1f2125] dark:border-gray-700">
-      <h1 className="flex items-center text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
-        <span className="">Google</span>
-        <span className="font-medium">News</span>
-      </h1>
+    <>
+      <header className="sticky top-0 z-50 p-2 mb-4 bg-white dark:bg-[#1f2125] border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center px-4 h-20">
+          <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
+            <Image
+              src="/Icons/logo.jpeg"
+              alt="NCP Logo"
+              width={44}
+              height={44}
+              className="rounded-2xl"
+            />
+          </h1>
 
-      <div className="flex items-center gap-2 sm:gap-4">
-        <button
-          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          aria-label="Help"
-        >
-          <HelpCircle size={20} />
-        </button>{" "}
-        <ModeToggle />
-        {!token ? (
-          <>
-            <Link
-              href="/login"
-              className="relative px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-all duration-300 group"
-            >
-              Login
-              <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-hover:w-full" />
-            </Link>
+          <div className="flex items-end h-full">
+            <Navigation />
+          </div>
 
-            <Link
-              href="/signup"
-              className="relative px-3 py-1 sm:px-5 sm:py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-sm shadow-sm hover:shadow-md transition-all duration-300 group dark:from-blue-600 dark:to-blue-700"
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="w-8 h-8 rounded-full overflow-hidden focus:outline-none"
             >
+<<<<<<< HEAD
               Sign Up 
               <span className="absolute inset-0 rounded-sm bg-blue-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
             </Link>
@@ -68,6 +123,77 @@ const Header: React.FC = () => {
         )}
       </div>
     </header>
+=======
+              <Image
+                src={avatarSrc}
+                alt="User Avatar"
+                width={32}
+                height={32}
+                className="object-cover rounded-full"
+                priority
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#2a2d31] border dark:border-gray-700 rounded-md shadow-lg z-50">
+                <div className="p-2 text-sm text-gray-800 dark:text-gray-200">
+                  {token ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          setIsProfileModalOpen(true);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                      >
+                        Edit Profile
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
+
+                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
+
+                  <div className="px-4 py-2">
+                    <ModeToggle />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {isProfileModalOpen && (
+        <ProfileModal
+          onClose={() => setIsProfileModalOpen(false)}
+          username={username}
+        />
+      )}
+    </>
+>>>>>>> stagging
   );
 };
 

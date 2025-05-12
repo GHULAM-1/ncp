@@ -1,21 +1,20 @@
 import React, { useState } from "react";
-import { Clipboard, Facebook } from "lucide-react";
-import Image from "next/image";
-import whatsappSrc from "../../../public/Icons/what.svg";
+import { Clipboard } from "lucide-react";
+import { FaFacebookF, FaWhatsapp, FaViber } from "react-icons/fa";
 import { ShareOptionProps } from "@/types/share-option-types";
-const WhatsappSVG: React.FC = () => (
-  <Image
-    src={whatsappSrc}
-    alt="WhatsApp logo"
-    width={24}
-    height={24}
-    className="w-6 h-6 text-green-500"
-  />
-);
+
 const iconMap: Record<ShareOptionProps["iconType"], React.ReactNode> = {
-  copy: <Clipboard className="w-6 h-6 text-gray-700" />,
-  facebook: <Facebook className="w-6 h-6 text-blue-600" />,
-  whatsapp: <WhatsappSVG />,
+  copy: <Clipboard className="w-5 h-5 text-white" />,
+  facebook: <FaFacebookF className="w-5 h-5 text-white" />,
+  whatsapp: <FaWhatsapp className="w-5 h-5 text-white" />,
+  viber: <FaViber className="w-5 h-5 text-white" />,
+};
+
+const bgColorMap: Record<ShareOptionProps["iconType"], string> = {
+  copy: "bg-gray-500",
+  facebook: "bg-[#3b5998]",
+  whatsapp: "bg-[#25D366]",
+  viber: "bg-[#7360F2]",
 };
 
 const ShareOption: React.FC<ShareOptionProps> = ({
@@ -38,13 +37,13 @@ const ShareOption: React.FC<ShareOptionProps> = ({
       aria-label={`Share via ${label}`}
     >
       <div
-        className={`p-3 rounded-full bg-gray-100 shadow-md transform transition-transform ${
+        className={`p-3 rounded-full shadow-md transform transition-transform ${
           clicked ? "scale-90" : "hover:scale-105"
-        }`}
+        } ${bgColorMap[iconType]}`}
       >
         {iconMap[iconType]}
       </div>
-      <span className="text-sm text-gray-700">{label}</span>
+      <span className="text-sm text-gray-700 dark:text-white">{label}</span>
     </button>
   );
 };
