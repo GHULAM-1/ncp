@@ -6,17 +6,19 @@ import Image from "next/image";
 interface ProfileModalProps {
   onClose: () => void;
   username: string;
+  token: string;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   onClose,
   username,
+  token,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  //STATES
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  //HANDLERS
+  const [loading, setLoading] = useState<boolean>(false);
+
   useEffect(() => {
     const preview = localStorage.getItem("profilePreview");
     if (preview) setProfilePreview(preview);
@@ -25,9 +27,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     if (stored) setProfileImage(stored);
   }, []);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
@@ -35,6 +38,44 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       localStorage.setItem("profilePreview", dataUrl);
     };
     reader.readAsDataURL(file);
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const res = await fetch("http://localhost:5001/api/users/upload-avatar", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      let data;
+      const isJson = res.headers
+        .get("content-type")
+        ?.includes("application/json");
+
+      if (isJson) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error("Upload error (non-JSON):", text);
+        return;
+      }
+
+      if (res.ok) {
+        setProfileImage(data.avatar);
+        localStorage.setItem("profileImage", data.avatar);
+      } else {
+        console.error("Upload error:", data.message || "Unknown error");
+      }
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const avatarSrc: string =
@@ -77,7 +118,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               onClick={() => fileInputRef.current?.click()}
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Change Profile Picture
+              {loading ? "Uploading..." : "Change Profile Picture"}
             </button>
             <input
               type="file"

@@ -14,7 +14,6 @@ connectDB();
 
 const app = express();
 
-
 const corsOptions = {
   origin: ["http://localhost:3000", "https://ncp-client.vercel.app"],
   credentials: true,

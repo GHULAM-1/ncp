@@ -155,10 +155,11 @@ const Header: React.FC = () => {
         </div>
       </header>
 
-      {isProfileModalOpen && (
+      {isProfileModalOpen && token && (
         <ProfileModal
           onClose={() => setIsProfileModalOpen(false)}
           username={username}
+          token={token}
         />
       )}
     </>
