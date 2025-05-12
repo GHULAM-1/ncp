@@ -28,8 +28,6 @@ export function LoginForm({
     setIsSubmitting(true);
     try {
       const response = await login(values);
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
       toast.success("Login successful");
       window.location.href = "/";
     } catch (error) {

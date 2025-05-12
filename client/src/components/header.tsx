@@ -11,17 +11,12 @@ const Header: React.FC = () => {
   const [user, setUser] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    setToken(localStorage.getItem("token"));
-    setUser(localStorage.getItem("user"));
-  }, []);
 
   const handleLogout = async () => {
     try {
       if (token) {
-        await logout(token);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        await logout();
+
         router.push("/login");
       }
     } catch (error) {
@@ -58,7 +53,7 @@ const Header: React.FC = () => {
               href="/signup"
               className="relative px-3 py-1 sm:px-5 sm:py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-sm shadow-sm hover:shadow-md transition-all duration-300 group dark:from-blue-600 dark:to-blue-700"
             >
-              Sign Up
+              Sign Up 
               <span className="absolute inset-0 rounded-sm bg-blue-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
             </Link>
           </>

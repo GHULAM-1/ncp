@@ -24,6 +24,7 @@ export function SignUpForm({
 
   const form = useForm<SignUpInputs>({
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
@@ -33,17 +34,13 @@ export function SignUpForm({
     setIsSubmitting(true);
     setError(null);
 
-    const { email, password } = values;
-    const name = email.split("@")[0];
+    const { email, password , name} = values;
 
     try {
       const response = await register({ name, email, password });
 
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
       toast.success("Registration successful");
-      router.push("/");
+      router.push("/login");
     } catch (error) {
       console.error("Registration error:", error);
       setError(
@@ -82,6 +79,29 @@ export function SignUpForm({
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="name"
+                  className="text-sm sm:text-base font-medium text-gray-700"
+                >
+                  Username
+                </Label>
+                <FormControl>
+                  <Input
+                    type="name"
+                    placeholder="Username"
+                    disabled={isSubmitting}
+                    className="h-12 sm:h-14 text-base sm:text-lg"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="email"

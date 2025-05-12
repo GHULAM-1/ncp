@@ -61,7 +61,8 @@ router.get(
 //   facebookCallback
 // );
 
-router.get("/me", protect, getMe);
+// routes
+router.get("/me", passport.authenticate("jwt", { session: false }), getMe);
 
 router.get("/logout", logout);
 
