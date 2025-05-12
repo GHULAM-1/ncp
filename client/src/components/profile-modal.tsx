@@ -20,12 +20,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const preview = localStorage.getItem("profilePreview");
-    if (preview) setProfilePreview(preview);
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to load profile");
+        const data = await res.json();
+        if (data.avatar) {
+          setProfileImage(data.avatar);
+          localStorage.setItem("profileImage", data.avatar);
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
 
-    const stored = localStorage.getItem("profileImage");
-    if (stored) setProfileImage(stored);
-  }, []);
+    fetchProfile();
+  }, [token]);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,41 +47,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
       setProfilePreview(dataUrl);
-      localStorage.setItem("profilePreview", dataUrl);
     };
     reader.readAsDataURL(file);
 
+    setLoading(true);
     try {
-      setLoading(true);
       const formData = new FormData();
       formData.append("avatar", file);
 
       const res = await fetch("http://localhost:5001/api/users/upload-avatar", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
-      let data;
-      const isJson = res.headers
-        .get("content-type")
-        ?.includes("application/json");
-
-      if (isJson) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        console.error("Upload error (non-JSON):", text);
-        return;
-      }
-
+      const data = await res.json();
       if (res.ok) {
         setProfileImage(data.avatar);
         localStorage.setItem("profileImage", data.avatar);
+        setProfilePreview(null);
       } else {
-        console.error("Upload error:", data.message || "Unknown error");
+        console.error("Upload error:", data.message);
       }
     } catch (err) {
       console.error("Upload failed:", err);
@@ -78,7 +76,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   };
 
-  const avatarSrc: string =
+  const avatarSrc =
     profilePreview ||
     profileImage ||
     (username

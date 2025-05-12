@@ -60,6 +60,17 @@ exports.getUser = async (req, res, next) => {
     next(error);
   }
 };
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching current user:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.updateUser = async (req, res, next) => {
   try {
