@@ -92,7 +92,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 p-2 mb-4 bg-white dark:bg-[#1f2125] border-b border-gray-200 dark:border-gray-700">
+      <header className="sticky top-0 z-50 p-2 mb-4 bg-white dark:bg-[#202124] border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center px-4 h-20">
           <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
             <Image
