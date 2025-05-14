@@ -49,8 +49,8 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
   }, [loadMore]);
 
   return (
-    <div className="max-w-3xl mx-auto  bg-white dark:bg-[#282a2e] dark:text-white">
-      <div className="shadow-sm rounded-2xl overflow-hidden bg-gray-50 dark:bg-gray-800">
+    <div className="max-w-3xl mx-auto  bg-white rounded-[18px] dark:bg-[#1f1f1f] dark:text-white">
+      <div className="shadow-sm rounded-2xl overflow-hidden bg-gray-50 dark:bg-[#1f1f1f]">
         {displayed.map((item) => (
           <NewsCard key={item.slug} {...item} />
         ))}
