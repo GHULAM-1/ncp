@@ -51,6 +51,9 @@ require("./config/passport")(passport);
 
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/users", require("./routes/user.routes"));
+app.use("/api/youtube", require("./routes/youtube.routes"));
+app.use("/api/news", require("./routes/news.routes"));
+app.use("/api/facebook", require("./routes/facebook.routes"));
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the Authentication API" });
