@@ -16,6 +16,15 @@ const Navigation: React.FC = () => {
         <Link href="https://ncp.discourse.group/latest" target="_blank">
           <NavItem label="Forum" active={pathname === "/forum"} />
         </Link>
+        <Link href="/rss">
+          <NavItem label="RSS" active={pathname === "/rss"} />
+        </Link>
+        <Link href="/youtube">
+          <NavItem label="YouTube" active={pathname === "/youtube"} />
+        </Link>
+        <Link href="/facebook">
+          <NavItem label="Facebook" active={pathname === "/facebook"} />
+        </Link>
       </div>
     </nav>
   );
