@@ -13,7 +13,7 @@ const Navigation: React.FC = () => {
         <Link href="/">
           <NavItem label="Home" active={pathname === "/"} />
         </Link>
-        <Link href="https://ncp.discourse.group/latest" target="_blank">
+        <Link href="https://n-cp.discourse.group/latest" target="_blank">
           <NavItem label="Forum" active={pathname === "/forum"} />
         </Link>
         <Link href="/rss">
