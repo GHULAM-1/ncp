@@ -53,16 +53,20 @@ const getBangladeshNews = async (req, res) => {
                         title = title.replace(/ - [^-]+$/, '');
                     }
                     
-                    // Extract link
+                    // Extract link - this is the key fix!
                     const linkMatch = item.match(/<link>(.*?)<\/link>/s);
-                    const link = linkMatch ? linkMatch[1].trim() : '';
+                    let link = linkMatch ? linkMatch[1].trim() : '';
                     
-                    // Extract GUID (often a cleaner link)
-                    const guidMatch = item.match(/<guid[^>]*>(.*?)<\/guid>/s);
-                    const guid = guidMatch ? guidMatch[1].trim() : '';
-                    
-                    // Use the shorter, cleaner URL if available
-                    const finalLink = (guid && guid.length < link.length) ? guid : link;
+                    // Clean up the link if it contains extra text
+                    if (link) {
+                        // Remove any CDATA wrappers if present
+                        link = link.replace(/^<!\[CDATA\[/, '').replace(/\]\]>$/, '');
+                        // Ensure it starts with http
+                        if (!link.startsWith('http')) {
+                            // If it's a relative URL, you might need to handle this differently
+                            console.warn('Found non-HTTP link:', link);
+                        }
+                    }
                     
                     // Extract publication date
                     const dateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
@@ -72,13 +76,7 @@ const getBangladeshNews = async (req, res) => {
                     if (date) {
                         try {
                             const dateObj = new Date(date);
-                            date = dateObj.toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
+                            date = dateObj.toISOString(); // Keep as ISO string for frontend formatting
                         } catch (e) {
                             // Keep original date if parsing fails
                         }
@@ -120,17 +118,18 @@ const getBangladeshNews = async (req, res) => {
                         description = description.substring(0, 200) + (description.length > 200 ? '...' : '');
                     }
                     
-                    // Validate and add item
-                    if (title && finalLink && title.length > 10) {
+                    // Validate and add item - ensure we have a proper HTTP link
+                    if (title && link && link.startsWith('http') && title.length > 10) {
                         items.push({
                             title: title.substring(0, 200),
-                            link: finalLink,
+                            link: link, // This should now be the proper URL
                             date: date,
                             source: newsSource,
                             description: description
                         });
                         
                         console.log(`Added: ${title.substring(0, 50)}... from ${newsSource}`);
+                        console.log(`Link: ${link.substring(0, 100)}...`);
                     }
                 } catch (itemError) {
                     console.error('Error processing item:', itemError);

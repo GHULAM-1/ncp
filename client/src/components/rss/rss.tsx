@@ -19,6 +19,7 @@ export default function RSSNews() {
       console.log('🔄 Refreshing RSS news...');
       
       const response = await fetchBangladeshNews();
+      console.log(response);
       setNews(response.news);
       setLastUpdated(new Date().toISOString());
       

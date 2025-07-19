@@ -16,7 +16,7 @@ export interface YouTubeResponse {
   videos: YouTubeVideo[];
 }
 
-export const fetchBangladeshNewsVideos = async (maxResults: number = 20): Promise<YouTubeResponse> => {
+export const fetchBangladeshNewsVideos = async (maxResults: number = 50): Promise<YouTubeResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/youtube/bangladesh-news?maxResults=${maxResults}`);
     

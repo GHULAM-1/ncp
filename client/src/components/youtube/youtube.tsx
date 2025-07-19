@@ -18,10 +18,9 @@ export default function YouTubeNews() {
       setRefreshing(true);
       console.log('🔄 Refreshing YouTube videos...');
       
-      const response = await fetchBangladeshNewsVideos(20);
+      const response = await fetchBangladeshNewsVideos(50);
       setVideos(response.videos);
       setLastUpdated(new Date().toISOString());
-      
       // Debug: Log thumbnail URLs
       response.videos.forEach((video, index) => {
         console.log(`Video ${index + 1} thumbnail:`, video.thumbnail);
