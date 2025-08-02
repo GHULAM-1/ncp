@@ -8,8 +8,8 @@ const Navigation: React.FC = () => {
   const pathname = usePathname();
 
   return (
-    <nav className=" border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2125] flex items-center justify-center mx-auto mb-4">
-      <div className="flex items-center">
+    <nav className="flex items-center">
+      <div className="flex items-center whitespace-nowrap">
         <Link href="/">
           <NavItem label="Home" active={pathname === "/"} />
         </Link>
