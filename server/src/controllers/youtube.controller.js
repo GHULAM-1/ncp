@@ -234,6 +234,8 @@ const fetchChannelVideos = async (channelUrls, maxResults, apiKey) => {
         continue;
       }
       
+      console.log(`🔍 Checking channel: @${channelHandle}`);
+      
       // First, get channel ID from handle
       const channelInfoUrl = `https://www.googleapis.com/youtube/v3/channels?key=${apiKey}&forHandle=@${channelHandle}&part=id`;
       const channelInfo = await fetch(channelInfoUrl).then(res => res.json());
