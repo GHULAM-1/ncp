@@ -44,10 +44,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
         >
           <div className="flex flex-col sm:flex-row">
             <div className="flex-1 pr-0 sm:pr-4 sm:mb-0">
-              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-100">
+              <span className="text-xs sm:text-sm font-[400] text-gray-700 dark:text-gray-100">
                 {source}
               </span>
-              <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-gray-900 dark:text-gray-100">
                 {title}
               </h3>
             </div>
@@ -66,7 +66,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </a>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
-          <div className="flex items-center gap-x-2">
+          <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
             <span>{timeAgo}</span>
             {author && (
               <>

@@ -80,90 +80,96 @@ export default function FacebookNews() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container max-w-[1000px] mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Facebook Posts</h1>
         <p className="text-gray-600 dark:text-gray-400">
           Latest posts from Facebook ({posts.length} posts)
         </p>
-        
-        {/* Refresh Status */}
-        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              {refreshing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
-                  <span>Refreshing posts...</span>
-                </>
-              ) : (
-                <>
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Auto-refresh active (every 30s)</span>
-                </>
-              )}
-            </div>
-            {lastUpdated && (
-              <span>Last updated: {new Date(lastUpdated).toLocaleTimeString()}</span>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {posts.map((post, index) => (
           <Card 
             key={`${post.title}-${index}`} 
-            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:scale-105"
+            className="group cursor-pointer bg-white dark:bg-[#1f2125] rounded-[8px] border-0 shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:scale-[102%] hover:shadow-xl"
             onClick={() => handleCardClick(post.url)}
           >
-            {post.image && (
+            {post.image && typeof post.image === 'string' && post.image.trim() !== '' ? (
               <div className="relative">
                 <img 
                   src={post.image} 
                   alt={post.title}
-                  className="w-full h-48 object-cover rounded-t-lg"
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling?.classList.remove('hidden');
+                  }}
                 />
+                {/* Fallback placeholder */}
+                <div className="hidden absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <div className="text-center flex flex-col items-center justify-center text-white">
+                    <p className="text-sm font-medium">{post.author}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-48 bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 flex items-center justify-center">
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  <User className="h-8 w-8 mx-auto" />
+                </div>
               </div>
             )}
-            <CardHeader>
-              <CardTitle className="text-lg line-clamp-2">{post.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
+            
+            <CardContent className="p-4">
               <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-500">
-                  <User className="h-4 w-4 mr-2" />
-                  <span className="line-clamp-1">{post.author}</span>
-                </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>
-                    {post.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : 'Unknown date'}
+                {/* Source badge */}
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                    Facebook
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                
+                {/* Title */}
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 leading-tight">
+                  {post.title}
+                </h3>
+                
+                {/* Description */}
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
                   {post.description}
                 </p>
                 
                 {/* Engagement metrics */}
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center">
-                    <ThumbsUp className="h-4 w-4 mr-1" />
+                    <ThumbsUp className="h-3 w-3 mr-1" />
                     <span>{post.engagement.likes}</span>
                   </div>
                   <div className="flex items-center">
-                    <MessageCircle className="h-4 w-4 mr-1" />
+                    <MessageCircle className="h-3 w-3 mr-1" />
                     <span>{post.engagement.comments}</span>
                   </div>
                   <div className="flex items-center">
-                    <Share2 className="h-4 w-4 mr-1" />
+                    <Share2 className="h-3 w-3 mr-1" />
                     <span>{post.engagement.shares}</span>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm text-blue-600 dark:text-blue-400">View on Facebook</span>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
+                
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    <span>
+                      {post.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : 'Unknown date'}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                    <User className="h-3 w-3 mr-1" />
+                    <span className="line-clamp-1">{post.author}</span>
+                  </div>
                 </div>
               </div>
             </CardContent>

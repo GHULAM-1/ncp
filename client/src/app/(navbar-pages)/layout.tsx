@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "../globals.css";
 import Header from "@/components/header";
 import { AuthProvider } from "@/components/context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import CookieBanner from "@/components/cookie-banner";
+import { Inter } from 'next/font/google'
 
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-});
-
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 export const metadata: Metadata = {
   title: "NCP News & Forum",
   description:
@@ -61,7 +61,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${roboto.variable} antialiased bg-white dark:bg-[#282a2e]`}
+        className={`${inter.variable} antialiased bg-white dark:bg-[#292a2d]`}
       >
         <AuthProvider>
           <ThemeProvider

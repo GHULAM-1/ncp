@@ -11,7 +11,7 @@ export default async function Page() {
   }));
 
   return (
-    <main className="max-w-[870px] mx-auto px-4">
+    <main className="max-w-[840px] mx-auto">
       <NewsFeed newsItems={newsItems} />
     </main>
   );

@@ -80,7 +80,7 @@ export default function RSSNews() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container max-w-[1000px] mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Bangladesh News</h1>
         <p className="text-gray-600 dark:text-gray-400">
@@ -94,27 +94,39 @@ export default function RSSNews() {
         {news.map((item, index) => (
           <Card 
             key={`${item.title}-${index}`} 
-            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:scale-105"
+            className="cursor-pointer group hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-[102%] bg-white dark:bg-[#1f2125] rounded-[8px] border-0 shadow-md"
             onClick={() => handleCardClick(item.link)}
           >
-            <CardHeader>
-              <CardTitle className="text-lg line-clamp-2">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-500">
-                  <Globe className="h-4 w-4 mr-2" />
-                  <span>{item.source}</span>
+            <CardContent className="p-0">
+              <div className="flex flex-col h-full">
+                {/* Header with source badge */}
+                <div className="p-4 pb-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {item.source}
+                      </span>
+                    </div>
+                    <ExternalLink className="h-4 w-4 group-hover:text-[#8ab4f8] text-gray-400" />
+                  </div>
+                  
+                  {/* Title */}
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-3 leading-tight mb-3">
+                    {item.title}
+                  </h3>
                 </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>
-                    {item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : 'Unknown date'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm text-blue-600 dark:text-blue-400">Click to read more</span>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
+                
+                {/* Footer with date and author */}
+                <div className="p-4 pt-0 mt-auto">
+                  <div className="flex items-center text-[12px] text-[#c4c7c5] dark:[#c4c7c5]">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <span>
+                      {item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : 'Unknown date'}
+                    </span>
+                    <span className="mx-2">•</span>
+                    <span>By {item.source}</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
