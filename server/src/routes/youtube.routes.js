@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { searchBangladeshNews } = require('../controllers/youtube.controller');
+const { searchBangladeshNews, getVideosByType } = require('../controllers/youtube.controller');
 
-// YouTube API Route
-router.get('/bangladesh-news', searchBangladeshNews);
+// Legacy route for backward compatibility
+router.get('/search', searchBangladeshNews);
+
+// New structured route for different content types
+router.get('/videos', getVideosByType);
 
 module.exports = router; 

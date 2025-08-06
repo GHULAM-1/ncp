@@ -3,7 +3,7 @@ const { ApifyClient } = require('apify-client');
 const getFacebookPosts = async (req, res) => {
     try {
         const apifyToken = process.env.APIFY;
-        const { maxPosts = 30, batch = 'true', timeout = 300000 } = req.query; // 5 min timeout
+        const { maxPosts = 5, batch = 'true', timeout = 300000 } = req.query; // 5 min timeout
         
         if (!apifyToken) {
             return res.status(400).json({ 
@@ -17,8 +17,27 @@ const getFacebookPosts = async (req, res) => {
 
         // Prioritized Facebook sources (most important first)
         const FACEBOOK_SOURCES = [
-            "https://www.facebook.com/Professor.Muhammad.Yunus",
-            "https://www.facebook.com/ChiefAdviserGOB",
+            "https://www.facebook.com/1NationalCitizenParty",
+            "https://www.facebook.com/NCPSpeaks",
+            // "https://www.facebook.com/nahidislamjuly",
+            // "https://www.facebook.com/MAYOR.AH.FAISAL",
+            // "https://www.facebook.com/arifulislamadiv1",
+            // "https://www.facebook.com/DoctorTasnimJara",
+            // "https://www.facebook.com/nahidasarwer.niva.5",
+            // "https://www.facebook.com/Munasabduh",
+            // "https://www.facebook.com/abdul.hannan.masud.480487",
+            // "https://www.facebook.com/hasnat.ab1",
+            // "https://www.facebook.com/sarjis.nirob",
+            // "https://www.facebook.com/Asif07M",
+            // "https://www.facebook.com/theredjulybd",
+            // "https://www.facebook.com/shadik.kayem",
+
+
+
+
+
+            // "https://www.facebook.com/Professor.Muhammad.Yunus",
+            // "https://www.facebook.com/ChiefAdviserGOB",
             // "https://www.facebook.com/shujanbd",
             // "https://www.facebook.com/tibangladesh",
             // "https://www.facebook.com/mpitom",
