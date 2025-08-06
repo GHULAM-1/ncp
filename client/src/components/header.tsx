@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { logout } from "../api/auth/api";
+import { API_URL, logout } from "../api/auth/api";
 import { ModeToggle } from "./mode-toggle";
 import Navigation from "./navigation";
 import { ProfileModal } from "./profile-modal";
@@ -43,7 +43,7 @@ const Header: React.FC = () => {
 
     const fetchAvatar = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/users/me", {
+        const res = await fetch(`${API_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
