@@ -171,7 +171,6 @@ async function scrapeBatch(client, urls, postsPerPage = 5) {
     
     // Transform posts using the ACTUAL caprolok field structure
     const allPosts = items.map((post, index) => {
-        // Extract text content - caption can be null, that's fine
         const text = post.caption || '';
         
         // Extract engagement data using the actual structure
