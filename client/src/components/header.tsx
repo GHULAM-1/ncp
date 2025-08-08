@@ -94,15 +94,17 @@ const Header: React.FC = () => {
     <>
       <header className="sticky top-0 z-50 p-2 mb-4 bg-white dark:bg-[#202124] border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center px-4 h-20">
-          <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white flex-shrink-0">
-            <Image
-              src="/Icons/logo.jpeg"
-              alt="NCP Logo"
-              width={44}
-              height={44}
-              className="rounded-2xl"
-            />
-          </h1>
+          <Link href="/">
+            <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white flex-shrink-0">
+              <Image
+                src="/Icons/logo.jpeg"
+                alt="NCP Logo"
+                width={44}
+                height={44}
+                className="rounded-2xl"
+              />
+            </h1>
+          </Link>
           <div className="flex-1 overflow-x-auto scrollbar-hide mx-4">
             <Navigation />
           </div>
