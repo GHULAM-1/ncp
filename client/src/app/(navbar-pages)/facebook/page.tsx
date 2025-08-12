@@ -23,8 +23,14 @@ export default async function FacebookPage() {
   let initialData = null;
   
   try {
-    initialData = await fetchFacebookPosts(15); // Only pass maxPosts parameter
-    console.log('🏗️ [ISR] Initial Facebook data loaded:', initialData.count, 'posts');
+    console.log('🏗️ [ISR] Starting Facebook data fetch...');
+    initialData = await fetchFacebookPosts(15, 1, 15); // maxPosts, page, limit
+    
+    if (initialData && initialData.success) {
+      console.log('✅ [ISR] Initial Facebook data loaded:', initialData.count, 'posts');
+    } else {
+      console.warn('⚠️ [ISR] Facebook data response incomplete:', initialData);
+    }
   } catch (error) {
     console.error('❌ [ISR] Failed to load initial Facebook data:', error);
     // Continue without initial data - component will handle loading state
