@@ -133,9 +133,6 @@ export default function RSSNews() {
 
   return (
     <div className="container max-w-[840px] mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-[28px] font-bold mb-2">Bangladesh News</h1>
-      </div>
 
       <div className="space-y-0 rounded-2xl overflow-hidden">
         {displayed.map((item, index) => (

@@ -75,18 +75,6 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
 
   return (
     <div className="container max-w-[840px] mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Facebook Posts</h1>
-            {lastUpdated && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Last updated: {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
 
       <div className="space-y-0 rounded-2xl overflow-hidden">
         {posts.map((post, index) => (
@@ -96,75 +84,66 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
             onClick={() => handleCardClick(post.url)}
           >
             <div className="border-b border-gray-200 dark:border-gray-700 py-4">
-              <div className="flex flex-col sm:flex-row">
-                <div className="flex-1 pr-0 sm:pr-4 sm:mb-0">
-                  <span className="text-xs sm:text-sm font-[400] text-gray-700 dark:text-gray-100">
-                    {post.source}
-                  </span>
-                  <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-gray-900 dark:text-gray-100">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mt-2">
-                    {post.description}
-                  </p>
+              {/* Header with Avatar and Name */}
+              <div className="flex items-center gap-5 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <User className="h-5 w-5 text-white" />
                 </div>
-                {post.image && typeof post.image === 'string' && post.image.trim() !== '' ? (
-                  <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gray-100 dark:bg-gray-700 rounded-[12px] overflow-hidden">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                    {/* Fallback placeholder */}
-                    <div className="hidden absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
-                          <User className="h-6 w-6" />
-                        </div>
-                        <p className="text-sm font-medium">{post.author}</p>
-                      </div>
-                    </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                    {post.author}
+                  </h4>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>
+                      {post.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : 'Unknown date'}
+                    </span>
+                    <span>•</span>
+                    <span>{post.source}</span>
                   </div>
-                ) : (
-                  <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gradient-to-br from-blue-500 to-purple-600 rounded-[12px] flex items-center justify-center">
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-3">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 leading-relaxed">
+                  {post.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                  {post.description}
+                </p>
+              </div>
+
+              {/* Image */}
+              {post.image && typeof post.image === 'string' && post.image.trim() !== '' ? (
+                <div className="relative w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-3">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  {/* Fallback placeholder */}
+                  <div className="hidden absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <div className="text-center text-white">
-                      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
-                        <User className="h-6 w-6" />
-                      </div>
                       <p className="text-sm font-medium">{post.author}</p>
                     </div>
                   </div>
-                )}
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
-                <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    {post.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : 'Unknown date'}
-                  </span>
-                  <span className="hidden md:inline">•</span>
-                  <User className="h-3 w-3" />
-                  <span>{post.author}</span>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCardClick(post.url);
-                    }}
-                    className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-                  >
-                    Read Article
-                  </button>
+              ) : (
+                <div className="w-full h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-3">
+                  <div className="text-center text-white">
+                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
+                      {/* <User className="h-6 w-6" /> */}
+                    </div>
+                    <p className="text-sm font-medium">{post.author}</p>
+                  </div>
                 </div>
-              </div>
+              )}
+
             </div>
           </div>
         ))}

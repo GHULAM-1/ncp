@@ -183,9 +183,7 @@ export default function YouTubeNews() {
           </div>
         </div>
       </div>
-      <div className="mb-8">
-        <h1 className="text-[28px] font-bold mb-2">YouTube Videos</h1>
-      </div>
+
 
       <div className="space-y-0 rounded-2xl  overflow-hidden">
         {loading ? (
@@ -311,7 +309,7 @@ export default function YouTubeNews() {
         )}
 
         {/* Infinite Scroll Loader */}
-        {hasMore && (
+        {hasMore && displayed.length > 0 && (
           <div
             ref={loaderRef}
             className="flex justify-center py-8 text-gray-700 dark:text-gray-300"
