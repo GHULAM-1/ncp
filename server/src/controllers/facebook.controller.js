@@ -61,7 +61,6 @@ const getFacebookPosts = async (req, res) => {
             // SINGLE CALL: All sources at once (slower but simpler)
             return await processSingleCall(client, FACEBOOK_SOURCES, maxPosts, res, startTime, timeout, req, 5);
         }
-        
     } catch (error) {
         console.error('Error scraping Facebook:', error);
         res.status(500).json({ 
