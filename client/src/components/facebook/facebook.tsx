@@ -17,19 +17,17 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
   const [lastUpdated, setLastUpdated] = useState<string>(
     initialData ? new Date().toISOString() : ''
   );
-  const REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
-
-  // Function to load posts
+  // Function to load posts (only when needed)
   const loadPosts = useCallback(async () => {
     try {
       setRefreshing(true);
-      console.log('🔄 Refreshing Facebook posts...');
+      console.log('🔄 Loading Facebook posts...');
       
-      const response = await fetchFacebookPosts(10);
+      const response = await fetchFacebookPosts(15, 1, 15); // Use pagination
       setPosts(response.posts);
       setLastUpdated(new Date().toISOString());
       
-      console.log(`✅ Facebook posts refreshed! Found ${response.posts.length} posts.`);
+      console.log(`✅ Facebook posts loaded! Found ${response.posts.length} posts.`);
     } catch (err) {
       setError('Failed to load posts');
       console.error('Error loading posts:', err);
@@ -45,18 +43,6 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
       loadPosts();
     }
   }, [initialData, loadPosts]);
-
-  // Set up auto-refresh interval
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!loading) { // Only refresh if not currently loading
-        loadPosts();
-      }
-    }, REFRESH_INTERVAL);
-    
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, [loadPosts, loading, REFRESH_INTERVAL]);
 
   const handleCardClick = (url: string) => {
     window.open(url, '_blank');
@@ -90,10 +76,27 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
   return (
     <div className="container max-w-[1000px] mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Facebook Posts</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Latest posts from Facebook ({posts.length} posts)
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Facebook Posts</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Latest posts from Facebook ({posts.length} posts)
+            </p>
+            {lastUpdated && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Last updated: {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={loadPosts}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
