@@ -441,8 +441,8 @@ const refreshFacebookData = async () => {
     }
 };
 
-// Export the cron function
+// Export functions
 module.exports = {
     getFacebookPosts,
-    refreshFacebookData,
+    // refreshFacebookData, // Commented out for now
 };

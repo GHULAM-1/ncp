@@ -9,8 +9,8 @@ const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
 const rateLimit = require("express-rate-limit");
 
-// Import the Facebook refresh function
-const { refreshFacebookData } = require('./controllers/facebook.controller');
+// Facebook refresh function (commented out for now)
+// const { refreshFacebookData } = require('./controllers/facebook.controller');
 
 dotenv.config();
 connectDB();
@@ -76,18 +76,73 @@ app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
-// Set up cron job for Facebook data refresh (every 2 hours)
-const cron = require('node-cron');
+// Cron job setup (commented out for now)
+let facebookRefreshInterval = null;
 
-// Schedule Facebook refresh every 2 hours
-cron.schedule('0 */2 * * *', async () => {
-  console.log('🕐 [CRON] Running scheduled Facebook refresh...');
-  await refreshFacebookData();
-}, {
-  scheduled: true,
-  timezone: "Asia/Dhaka"
+// Function to start Facebook refresh interval
+const startFacebookRefresh = () => {
+  if (facebookRefreshInterval) {
+    clearInterval(facebookRefreshInterval);
+  }
+  
+  // Refresh every 2 hours (2 * 60 * 60 * 1000 = 7,200,000 ms)
+  facebookRefreshInterval = setInterval(async () => {
+    try {
+      console.log('🕐 [TIMER] Starting Facebook data refresh...');
+      const startTime = Date.now();
+      
+      // Make a request to your own Facebook API endpoint
+      const response = await fetch(`${process.env.SERVER_URL || 'http://localhost:5001'}/api/facebook/posts?maxPosts=50&batch=true`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ [TIMER] Facebook data refreshed: ${data.count} posts in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
+      } else {
+        console.warn('⚠️ [TIMER] Facebook refresh failed with status:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ [TIMER] Facebook refresh error:', error.message);
+    }
+  }, 2 * 60 * 60 * 1000); // 2 hours
+  
+  console.log('⏰ [TIMER] Facebook refresh scheduled every 2 hours');
+};
+
+// Start the interval when server starts
+startFacebookRefresh();
+
+app.get('/api/refresh/facebook', async (req, res) => {
+  try {
+    console.log('🔄 Manual Facebook refresh requested...');
+    const startTime = Date.now();
+    
+    // Make a request to your Facebook API
+    const response = await fetch(`${process.env.SERVER_URL || 'http://localhost:5001'}/api/facebook/posts?maxPosts=50&batch=true`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const executionTime = ((Date.now() - startTime) / 1000).toFixed(2);
+      
+      res.json({
+        success: true,
+        message: 'Facebook data refreshed successfully',
+        count: data.count,
+        executionTime: `${executionTime}s`
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to refresh Facebook data',
+        status: response.status
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Facebook refresh failed',
+      message: error.message
+    });
+  }
 });
-
-console.log('⏰ [CRON] Facebook refresh scheduled every 2 hours');
 
 module.exports = app;
