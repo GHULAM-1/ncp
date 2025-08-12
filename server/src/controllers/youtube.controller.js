@@ -16,7 +16,7 @@ const CONTENT_TYPES = {
       "Al Jazeera English", "BBC News Bangla", "DW Bangla", "TRT World",
       "BBC News", "VOA Bangla"
     ],
-    maxResults: 30
+    maxResults: 100
   },
   talkshows: {
     playlists: [
@@ -40,7 +40,7 @@ const CONTENT_TYPES = {
       "PLAHVDBLW1GY4h1MCE5EcMGs6XQGnUEncf",
       "PLFv6mvxs9kPMwdI2efnIy-oAkFpRM3ZCU"
     ],
-    maxResults: 20
+    maxResults: 100
   },
   youtube: {
     channelUrls: [
@@ -54,7 +54,7 @@ const CONTENT_TYPES = {
       "https://www.youtube.com/@kanaksarwarnews/streams",
       "https://www.youtube.com/@EliasHossain/streams"
     ],
-    maxResults: 25
+    maxResults: 100
   }
 };
 
@@ -106,17 +106,27 @@ const getVideosByType = async (req, res) => {
 
     uniqueVideos.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
+    // Get pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
     const sourceInfo = type === 'talkshows' 
       ? `${playlistResponse.length} from playlists`
       : `${youtubeResponse.length} from YouTube search, ${playlistResponse.length} from playlists`;
     
     console.log(`✅ ${type}: ${uniqueVideos.length} total videos (${sourceInfo})`);
+    console.log(`📄 Page ${page}: showing ${startIndex + 1}-${Math.min(endIndex, uniqueVideos.length)} of ${uniqueVideos.length}`);
 
     res.json({
       success: true,
       type: type,
       count: uniqueVideos.length,
-      videos: uniqueVideos.slice(0, maxResults),
+      videos: uniqueVideos.slice(startIndex, endIndex),
+      page: page,
+      limit: limit,
+      hasMore: endIndex < uniqueVideos.length,
       sources: {
         youtube: youtubeResponse.length,
         playlists: playlistResponse.length,
@@ -141,24 +151,50 @@ const getVideosByType = async (req, res) => {
 
 // Function to fetch YouTube videos
 const fetchYouTubeVideos = async (searchQuery, channels, maxResults, apiKey) => {
-  const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${encodeURIComponent(
-    searchQuery
-  )}&part=snippet&order=date&type=video&maxResults=${maxResults * 2}`; // Request more to account for filtering
+  const allVideos = [];
+  const maxApiResults = 50; // YouTube API max per request
+  const totalRequests = Math.ceil(maxResults * 3 / maxApiResults); // Request more to account for filtering
+  
+  console.log(`🔄 Making ${totalRequests} requests to get more videos...`);
+  
+  let nextPageToken = '';
+  for (let i = 0; i < totalRequests; i++) {
+    const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${encodeURIComponent(
+      searchQuery
+    )}&part=snippet&order=date&type=video&maxResults=${maxApiResults}&pageToken=${nextPageToken}`;
 
-  const response = await fetch(url).then(res => res.json());
+    const response = await fetch(url).then(res => res.json());
 
-  if (response.error) {
-    throw new Error(`YouTube API Error: ${response.error.message}`);
+    if (response.error) {
+      throw new Error(`YouTube API Error: ${response.error.message}`);
+    }
+
+    console.log(`📡 Request ${i + 1}: YouTube API returned ${response.items.length} videos`);
+    allVideos.push(...response.items);
+    
+    // Update nextPageToken for next iteration
+    nextPageToken = response.nextPageToken || '';
+    
+    // If no more pages, break
+    if (!nextPageToken) {
+      console.log('No more pages available from YouTube API');
+      break;
+    }
+    
+    // Small delay to be respectful to API
+    if (i < totalRequests - 1) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
   }
 
-  console.log(`YouTube API returned ${response.items.length} videos for "${searchQuery}"`);
+  console.log(`🎯 Total videos from YouTube API: ${allVideos.length}`);
 
   // Debug: Show all channel titles from API response
-  const allChannelTitles = [...new Set(response.items.map(v => v.snippet.channelTitle))];
+  const allChannelTitles = [...new Set(allVideos.map(v => v.snippet.channelTitle))];
   console.log('🔍 All channel titles from API response:', allChannelTitles);
 
   // Filter by channels with more lenient matching
-  let filteredVideos = response.items.filter((item) => {
+  let filteredVideos = allVideos.filter((item) => {
     const channelTitle = item.snippet.channelTitle;
     
     // Method 1: Exact substring matching
@@ -201,7 +237,7 @@ const fetchYouTubeVideos = async (searchQuery, channels, maxResults, apiKey) => 
   // Fallback: if no channels match, return top videos
   if (filteredVideos.length === 0) {
     console.log('No videos found from specified channels, falling back to top videos');
-    filteredVideos = response.items.slice(0, Math.min(maxResults, response.items.length));
+    filteredVideos = allVideos.slice(0, Math.min(maxResults, allVideos.length));
   }
 
   return filteredVideos.map((item) => {

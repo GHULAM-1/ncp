@@ -9,6 +9,9 @@ const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
 const rateLimit = require("express-rate-limit");
 
+// Import the Facebook refresh function
+const { refreshFacebookData } = require('./controllers/facebook.controller');
+
 dotenv.config();
 connectDB();
 
@@ -72,5 +75,19 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
+
+// Set up cron job for Facebook data refresh (every 2 hours)
+const cron = require('node-cron');
+
+// Schedule Facebook refresh every 2 hours
+cron.schedule('0 */2 * * *', async () => {
+  console.log('🕐 [CRON] Running scheduled Facebook refresh...');
+  await refreshFacebookData();
+}, {
+  scheduled: true,
+  timezone: "Asia/Dhaka"
+});
+
+console.log('⏰ [CRON] Facebook refresh scheduled every 2 hours');
 
 module.exports = app;

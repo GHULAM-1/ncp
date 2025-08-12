@@ -33,13 +33,13 @@ const getBangladeshNews = async (req, res) => {
         function extractNews(xmlData, source) {
             if (!xmlData) return [];
             
-            console.log('Processing XML data for', source);
+            console.log('Processing XML data for', xmlData.length);
             
             const items = [];
             const itemRegex = /<item>(.*?)<\/item>/gs;
             let match;
             
-            while ((match = itemRegex.exec(xmlData)) !== null && items.length < 20) {
+            while ((match = itemRegex.exec(xmlData)) !== null) {
                 const item = match[1];
                 
                 try {
@@ -179,10 +179,19 @@ const getBangladeshNews = async (req, res) => {
 
         console.log(`Returning ${uniqueNews.length} unique news items`);
 
+        // Get pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 30; // Increased from 15 to 30
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+
         res.json({
             success: true,
             count: uniqueNews.length,
-            news: uniqueNews.slice(0, 15), // Limit to 15 most recent
+            news: uniqueNews.slice(startIndex, endIndex),
+            page: page,
+            limit: limit,
+            hasMore: endIndex < uniqueNews.length,
             lastUpdated: new Date().toISOString()
         });
         

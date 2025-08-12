@@ -56,10 +56,10 @@ const getFacebookPosts = async (req, res) => {
 
         if (batch === 'true') {
             // FAST METHOD: Process in batches of 5 sources
-            return await processBatches(client, FACEBOOK_SOURCES, maxPosts, res, startTime, timeout);
+            return await processBatches(client, FACEBOOK_SOURCES, maxPosts, res, startTime, timeout, req, 5);
         } else {
             // SINGLE CALL: All sources at once (slower but simpler)
-            return await processSingleCall(client, FACEBOOK_SOURCES, maxPosts, res, startTime, timeout);
+            return await processSingleCall(client, FACEBOOK_SOURCES, maxPosts, res, startTime, timeout, req, 5);
         }
         
     } catch (error) {
@@ -72,7 +72,7 @@ const getFacebookPosts = async (req, res) => {
     }
 };
 
-async function processBatches(client, sources, maxPosts, res, startTime, timeout, postsPerPage) {
+async function processBatches(client, sources, maxPosts, res, startTime, timeout, req, postsPerPage) {
     const batchSize = 5; // Process 5 URLs at a time
     const allPosts = [];
     const failedBatches = [];
@@ -108,10 +108,10 @@ async function processBatches(client, sources, maxPosts, res, startTime, timeout
         }
     }
 
-    return sendResponse(res, allPosts, sources.length, startTime, 'batch', failedBatches, postsPerPage);
+    return sendResponse(req, res, allPosts, sources.length, startTime, 'batch', failedBatches, postsPerPage);
 }
 
-async function processSingleCall(client, sources, maxPosts, res, startTime, timeout, postsPerPage) {
+async function processSingleCall(client, sources, maxPosts, res, startTime, timeout, req, postsPerPage) {
     console.log(`🐌 SINGLE MODE: Processing all ${sources.length} sources in one call`);
     
     try {
@@ -124,7 +124,7 @@ async function processSingleCall(client, sources, maxPosts, res, startTime, time
         
         const posts = await Promise.race([scrapingPromise, timeoutPromise]);
         
-        return sendResponse(res, posts, sources.length, startTime, 'single', [], postsPerPage);
+        return sendResponse(req, res, posts, sources.length, startTime, 'single', [], postsPerPage);
         
     } catch (error) {
         if (error.message === 'Operation timed out') {
@@ -355,7 +355,7 @@ function limitPostsPerSource(posts, sourceUrls, maxPerSource = 5) {
     return limitedPosts;
 }
 
-function sendResponse(res, allPosts, totalSources, startTime, mode, failedBatches, postsPerPage) {
+function sendResponse(req, res, allPosts, totalSources, startTime, mode, failedBatches, postsPerPage) {
     // Remove duplicates
     const uniquePosts = allPosts.filter((post, index, self) => 
         index === self.findIndex(p => p.postId === post.postId)
@@ -364,14 +364,24 @@ function sendResponse(res, allPosts, totalSources, startTime, mode, failedBatche
     // Sort by date (most recent first)
     uniquePosts.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
+    // Get pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
     const executionTime = ((Date.now() - startTime) / 1000).toFixed(2);
     
     console.log(`🎉 Completed in ${executionTime}s: ${uniquePosts.length} unique posts (max ${postsPerPage} per page)`);
+    console.log(`📄 Page ${page}: showing ${startIndex + 1}-${Math.min(endIndex, uniquePosts.length)} of ${uniquePosts.length}`);
 
     res.json({
         success: true,
         count: uniquePosts.length,
-        posts: uniquePosts,
+        posts: uniquePosts.slice(startIndex, endIndex),
+        page: page,
+        limit: limit,
+        hasMore: endIndex < uniquePosts.length,
         settings: {
             postsPerPage: postsPerPage,
             totalSources: totalSources,
@@ -390,6 +400,50 @@ function sendResponse(res, allPosts, totalSources, startTime, mode, failedBatche
     });
 }
 
+// Cron job function to refresh Facebook data every 2 hours
+const refreshFacebookData = async () => {
+    try {
+        console.log('🕐 [CRON] Starting Facebook data refresh...');
+        const startTime = Date.now();
+        
+        // Simulate a request object for the cron job
+        const mockReq = {
+            query: {
+                maxPosts: 50,
+                batch: 'true',
+                timeout: 300000,
+                page: 1,
+                limit: 50
+            }
+        };
+        
+        // Create a mock response object to capture the data
+        let capturedData = null;
+        const mockRes = {
+            json: (data) => {
+                capturedData = data;
+                console.log('✅ [CRON] Facebook data refreshed successfully');
+                console.log(`📊 [CRON] Retrieved ${data.count} posts in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
+            },
+            status: () => mockRes
+        };
+        
+        // Call the main function
+        await getFacebookPosts(mockReq, mockRes);
+        
+        // Store the refreshed data (you can save this to a database or cache)
+        if (capturedData && capturedData.success) {
+            // Here you could save to Redis, database, or file system
+            console.log('💾 [CRON] Data captured and ready for ISR');
+        }
+        
+    } catch (error) {
+        console.error('❌ [CRON] Facebook refresh failed:', error.message);
+    }
+};
+
+// Export the cron function
 module.exports = {
     getFacebookPosts,
+    refreshFacebookData,
 };
