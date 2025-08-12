@@ -20,11 +20,14 @@ export interface FacebookResponse {
   success: boolean;
   count: number;
   posts: FacebookPost[];
+  page?: number;
+  limit?: number;
+  hasMore?: boolean;
 }
 
-export const fetchFacebookPosts = async (maxPosts: number = 5): Promise<FacebookResponse> => {
+export const fetchFacebookPosts = async (maxPosts: number = 5, page: number = 1, limit: number = 15): Promise<FacebookResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/facebook/posts?maxPosts=${maxPosts}`);
+    const response = await fetch(`${API_BASE_URL}/facebook/posts?maxPosts=${maxPosts}&page=${page}&limit=${limit}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

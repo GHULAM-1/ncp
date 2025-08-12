@@ -61,7 +61,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} antialiased bg-white dark:bg-[#292a2d]`}
+        className={`${inter.variable} antialiased bg-[#f6f8fc] dark:bg-[#292a2d]`}
       >
         <AuthProvider>
           <ThemeProvider

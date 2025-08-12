@@ -1,5 +1,6 @@
 import FacebookNews from "@/components/facebook/facebook";
 import { Metadata } from "next";
+import { fetchFacebookPosts } from "@/api/facebook/api";
 
 export const metadata: Metadata = {
   title: "Bangladesh Facebook News - Social Media Updates | NCP",
@@ -14,6 +15,20 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function FacebookPage() {
-  return <FacebookNews />;
+// ISR: Revalidate every 2.5 hours (9000 seconds)
+export const revalidate = 9000;
+
+export default async function FacebookPage() {
+  // Fetch initial data at build time and during revalidation
+  let initialData = null;
+  
+  try {
+    initialData = await fetchFacebookPosts(15); // Only pass maxPosts parameter
+    console.log('🏗️ [ISR] Initial Facebook data loaded:', initialData.count, 'posts');
+  } catch (error) {
+    console.error('❌ [ISR] Failed to load initial Facebook data:', error);
+    // Continue without initial data - component will handle loading state
+  }
+
+  return <FacebookNews initialData={initialData} />;
 }

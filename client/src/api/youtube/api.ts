@@ -16,6 +16,9 @@ export interface YouTubeResponse {
   type: string;
   count: number;
   videos: YouTubeVideo[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
   sources: {
     youtube: number;
     googleAlerts: number;
@@ -32,10 +35,11 @@ export interface YouTubeResponse {
 export type ContentType = 'channels' | 'talkshows' | 'youtube';
 
 // Fetch videos by content type
-export const fetchVideosByType = async (type: ContentType, maxResults?: number): Promise<YouTubeResponse> => {
+export const fetchVideosByType = async (type: ContentType, page: number = 1, limit: number = 15): Promise<YouTubeResponse> => {
   try {
     const params = new URLSearchParams({ type });
-    if (maxResults) params.append('maxResults', maxResults.toString());
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
     
     const response = await fetch(`${API_BASE_URL}/youtube/videos?${params}`);
     

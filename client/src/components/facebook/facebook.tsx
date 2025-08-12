@@ -1,16 +1,22 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchFacebookPosts, FacebookPost } from '@/api/facebook/api';
+import { fetchFacebookPosts, FacebookPost, FacebookResponse } from '@/api/facebook/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ExternalLink, Calendar, User, ThumbsUp, MessageCircle, Share2, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
-export default function FacebookNews() {
-  const [posts, setPosts] = useState<FacebookPost[]>([]);
-  const [loading, setLoading] = useState(true);
+interface FacebookNewsProps {
+  initialData?: FacebookResponse | null;
+}
+
+export default function FacebookNews({ initialData }: FacebookNewsProps) {
+  const [posts, setPosts] = useState<FacebookPost[]>(initialData?.posts || []);
+  const [loading, setLoading] = useState(!initialData); // No loading if we have initial data
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [lastUpdated, setLastUpdated] = useState<string>(
+    initialData ? new Date().toISOString() : ''
+  );
   const REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
 
   // Function to load posts
@@ -33,10 +39,12 @@ export default function FacebookNews() {
     }
   }, []);
 
-  // Initial load
+  // Initial load - only if we don't have initial data
   useEffect(() => {
-    loadPosts();
-  }, [loadPosts]);
+    if (!initialData) {
+      loadPosts();
+    }
+  }, [initialData, loadPosts]);
 
   // Set up auto-refresh interval
   useEffect(() => {

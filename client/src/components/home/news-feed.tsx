@@ -50,7 +50,7 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
 
   return (
     <div className="w-full  rounded-[18px] dark:bg[#292a2d] dark:text-white">
-      <h1 className="text-[28px] mb-5">
+      <h1 className="text-[28px] font-bold mb-5">
         For you
       </h1>
       <div className="shadow-sm rounded-2xl overflow-hidden bg-gray-50 dark:bg[#292a2d]">

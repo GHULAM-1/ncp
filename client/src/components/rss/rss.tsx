@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchBangladeshNews, NewsItem } from '@/api/news/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Loader from '../loader';
 import { Loader2, ExternalLink, Calendar, Globe, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -12,18 +12,29 @@ export default function RSSNews() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
+  
+  // Infinite scroll states
+  const PAGE_SIZE = 30; // Match server limit
+  const [displayed, setDisplayed] = useState<NewsItem[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const page = useRef(1);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
   // Function to load news
   const loadNews = useCallback(async () => {
     try {
       setRefreshing(true);
       console.log('🔄 Refreshing RSS news...');
       
-      const response = await fetchBangladeshNews();
+      const response = await fetchBangladeshNews(1, PAGE_SIZE);
       console.log(response);
       setNews(response.news);
+      setDisplayed(response.news);
+      setHasMore(response.hasMore);
       setLastUpdated(new Date().toISOString());
+      page.current = 1;
       
-      console.log(`✅ RSS news refreshed! Found ${response.news.length} articles.`);
+      console.log(`✅ RSS news refreshed! Found ${response.news.length} articles. Has more: ${response.hasMore}`);
     } catch (err) {
       setError('Failed to load news');
       console.error('Error loading news:', err);
@@ -32,6 +43,33 @@ export default function RSSNews() {
       setRefreshing(false);
     }
   }, []);
+
+  // Function to load more news for infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = page.current + 1;
+      console.log(`🔄 Loading page ${nextPage}...`);
+      
+      const response = await fetchBangladeshNews(nextPage, PAGE_SIZE);
+      
+      if (response.success && response.news.length > 0) {
+        setDisplayed((prev) => [...prev, ...response.news]);
+        setHasMore(response.hasMore);
+        page.current = nextPage;
+        console.log(`✅ Loaded page ${nextPage}. Total items: ${displayed.length + response.news.length}`);
+      } else {
+        setHasMore(false);
+        console.log('No more news available');
+      }
+    } catch (err) {
+      console.error('Error loading more news:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, displayed.length]);
 
   // Initial load
   useEffect(() => {
@@ -49,6 +87,20 @@ export default function RSSNews() {
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, [loadNews, loading, REFRESH_INTERVAL]);
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([ent]) => {
+        if (ent.isIntersecting) loadMore();
+      },
+      { rootMargin: "200px" }
+    );
+    if (loaderRef.current) obs.observe(loaderRef.current);
+    return () => {
+      if (loaderRef.current) obs.unobserve(loaderRef.current);
+    };
+  }, [loadMore]);
 
   const handleCardClick = (link: string) => {
     window.open(link, '_blank');
@@ -80,59 +132,66 @@ export default function RSSNews() {
   }
 
   return (
-    <div className="container max-w-[1000px] mx-auto px-4 py-8">
+    <div className="container max-w-[840px] mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Bangladesh News</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Latest news from RSS feeds ({news.length} articles)
-        </p>
-        
-
+        <h1 className="text-[28px] font-bold mb-2">Bangladesh News</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {news.map((item, index) => (
-          <Card 
-            key={`${item.title}-${index}`} 
-            className="cursor-pointer group hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-[102%] bg-white dark:bg-[#1f2125] rounded-[8px] border-0 shadow-md"
+      <div className="space-y-0 rounded-2xl overflow-hidden">
+        {displayed.map((item, index) => (
+          <div
+            key={`${item.title}-${index}`}
+            className="bg-white dark:bg-[#1f2125] px-4 cursor-pointer"
             onClick={() => handleCardClick(item.link)}
           >
-            <CardContent className="p-0">
-              <div className="flex flex-col h-full">
-                {/* Header with source badge */}
-                <div className="p-4 pb-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {item.source}
-                      </span>
-                    </div>
-                    <ExternalLink className="h-4 w-4 group-hover:text-[#8ab4f8] text-gray-400" />
-                  </div>
-                  
-                  {/* Title */}
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-3 leading-tight mb-3">
+            <div className="border-b border-gray-200 dark:border-gray-700 py-4">
+              <div className="flex flex-col sm:flex-row">
+                <div className="flex-1 pr-0 sm:pr-4 sm:mb-0">
+                  <span className="text-xs sm:text-sm font-[400] text-gray-700 dark:text-gray-100">
+                    {item.source}
+                  </span>
+                  <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-gray-900 dark:text-gray-100">
                     {item.title}
                   </h3>
                 </div>
-                
-                {/* Footer with date and author */}
-                <div className="p-4 pt-0 mt-auto">
-                  <div className="flex items-center text-[12px] text-[#c4c7c5] dark:[#c4c7c5]">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span>
-                      {item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : 'Unknown date'}
-                    </span>
-                    <span className="mx-2">•</span>
-                    <span>By {item.source}</span>
-                  </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
+                <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
+                  <Calendar className="h-3 w-3" />
+                  <span>
+                    {item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : 'Unknown date'}
+                  </span>
+                  <span className="hidden md:inline">•</span>
+                  <span>By {item.source}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCardClick(item.link);
+                    }}
+                    className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                  >
+                    Read Article
+                  </button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
+
+      {/* Infinite Scroll Loader */}
+      {hasMore && (
+        <div
+          ref={loaderRef}
+          className="flex justify-center py-8 text-gray-700 dark:text-gray-300"
+        >
+          {loadingMore && <Loader />}
+        </div>
+      )}
 
       {news.length === 0 && !loading && (
         <div className="text-center py-12">
