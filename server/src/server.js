@@ -79,33 +79,34 @@ app.listen(PORT, () => {
 // Cron job setup (commented out for now)
 let facebookRefreshInterval = null;
 
-// Function to start Facebook refresh interval
+// Function to start Facebook refresh interval (data preparation only)
 const startFacebookRefresh = () => {
   if (facebookRefreshInterval) {
     clearInterval(facebookRefreshInterval);
   }
   
-  // Refresh every 2 hours (2 * 60 * 60 * 1000 = 7,200,000 ms)
+  // Prepare fresh data every 2 hours for next ISR cycle
   facebookRefreshInterval = setInterval(async () => {
     try {
-      console.log('🕐 [TIMER] Starting Facebook data refresh...');
+      console.log('🕐 [TIMER] Preparing fresh Facebook data for next ISR cycle...');
       const startTime = Date.now();
       
-      // Make a request to your own Facebook API endpoint
+      // Fetch fresh data from Facebook API and cache it
       const response = await fetch(`${process.env.SERVER_URL || 'http://localhost:5001'}/api/facebook/posts?maxPosts=50&batch=true`);
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`✅ [TIMER] Facebook data refreshed: ${data.count} posts in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
+        console.log(`✅ [TIMER] Fresh Facebook data prepared: ${data.count} posts in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
+        console.log('🔄 [TIMER] Data is now ready for next ISR revalidation cycle');
       } else {
-        console.warn('⚠️ [TIMER] Facebook refresh failed with status:', response.status);
+        console.warn('⚠️ [TIMER] Facebook data preparation failed with status:', response.status);
       }
     } catch (error) {
-      console.error('❌ [TIMER] Facebook refresh error:', error.message);
+      console.error('❌ [TIMER] Facebook data preparation error:', error.message);
     }
   }, 2 * 60 * 60 * 1000); // 2 hours
   
-  console.log('⏰ [TIMER] Facebook refresh scheduled every 2 hours');
+  console.log('⏰ [TIMER] Facebook data preparation scheduled every 2 hours');
 };
 
 // Start the interval when server starts
@@ -127,7 +128,8 @@ app.get('/api/refresh/facebook', async (req, res) => {
         success: true,
         message: 'Facebook data refreshed successfully',
         count: data.count,
-        executionTime: `${executionTime}s`
+        executionTime: `${executionTime}s`,
+        note: 'This data will be used for the next ISR revalidation cycle'
       });
     } else {
       res.status(500).json({
