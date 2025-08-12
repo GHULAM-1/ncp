@@ -11,7 +11,7 @@ interface FacebookNewsProps {
 
 export default function FacebookNews({ initialData }: FacebookNewsProps) {
   const [posts, setPosts] = useState<FacebookPost[]>(initialData?.posts || []);
-  const [loading, setLoading] = useState(!initialData); // No loading if we have initial data
+  const [loading, setLoading] = useState(!initialData); 
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>(
