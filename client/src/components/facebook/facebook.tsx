@@ -84,7 +84,6 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
             onClick={() => handleCardClick(post.url)}
           >
             <div className="border-b border-gray-200 dark:border-gray-700 py-4">
-              {/* Header with Avatar and Name */}
               <div className="flex items-center gap-5 mb-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <User className="h-5 w-5 text-white" />
