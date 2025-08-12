@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   ],
 };
 
-// ISR: Revalidate every 2.5 hours (9000 seconds)
 export const revalidate = 9000;
 
 export default async function FacebookPage() {
