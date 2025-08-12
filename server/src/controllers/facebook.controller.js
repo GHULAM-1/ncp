@@ -14,7 +14,6 @@ const getFacebookPosts = async (req, res) => {
         const client = new ApifyClient({
             token: apifyToken,
         });
-        // Prioritized Facebook sources (most important first)
         const FACEBOOK_SOURCES = [
             "https://www.facebook.com/1NationalCitizenParty",
             "https://www.facebook.com/NCPSpeaks",
