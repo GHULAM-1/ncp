@@ -6,16 +6,23 @@ import DisqusComments from "../config/disqus-comments";
 import ShareButton from "./share-button";
 import { Send, MessageSquare } from "lucide-react";
 
-const NewsCard: React.FC<NewsCardProps> = ({
+interface NewsCardPropsWithCommentControl extends NewsCardProps {
+  openCommentId: string | null;
+  onCommentToggle: (id: string) => void;
+}
+
+const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
   source,
   title,
   timeAgo,
   author,
   imageUrl,
   link,
+  openCommentId,
+  onCommentToggle,
 }) => {
-  const [showComments, setShowComments] = useState(false);
   const post = { slug: link, title };
+  const isCommentsOpen = openCommentId === link;
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -80,10 +87,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
             <div className="hidden md:flex items-center gap-2">
               <ShareButton url={link} title={title} />
               <button
-                onClick={() => setShowComments((prev) => !prev)}
+                onClick={() => onCommentToggle(link)}
                 className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
               >
-                {showComments ? "Close Comments" : "Show Comments"}
+                {isCommentsOpen ? "Close Comments" : "Show Comments"}
               </button>
             </div>
 
@@ -91,7 +98,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
               <ShareButton url={link} title={title} />
 
               <button
-                onClick={() => setShowComments((prev) => !prev)}
+                onClick={() => onCommentToggle(link)}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
                 title="Comments"
               >
@@ -104,7 +111,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           </div>
         </div>
 
-        {showComments && (
+        {isCommentsOpen && (
           <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
             <DisqusComments post={post} key={post.slug} />
           </div>

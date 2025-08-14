@@ -22,7 +22,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/users/me", {
+        const res = await fetch("http://localhost:5001/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load profile");

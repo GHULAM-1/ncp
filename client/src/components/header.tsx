@@ -43,7 +43,7 @@ const Header: React.FC = () => {
 
     const fetchAvatar = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/users/me`, {
+        const res = await fetch(`${API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");

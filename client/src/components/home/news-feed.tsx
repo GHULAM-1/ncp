@@ -15,8 +15,14 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
     newsItems.slice(0, PAGE_SIZE)
   );
   const [loading, setLoading] = useState(false);
+  const [openCommentId, setOpenCommentId] = useState<string | null>(null);
   const page = useRef(1);
   const loaderRef = useRef<HTMLDivElement | null>(null);
+
+  // Comment toggle handler - automatically closes other comments
+  const handleCommentToggle = (id: string) => {
+    setOpenCommentId(openCommentId === id ? null : id);
+  };
 
   // HANDLERS (Delay Added)
   const loadMore = useCallback(() => {
@@ -55,7 +61,12 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
       </h1>
       <div className="shadow-sm rounded-2xl overflow-hidden bg-gray-50 dark:bg[#292a2d]">
         {displayed.map((item) => (
-          <NewsCard key={item.slug} {...item} />
+          <NewsCard 
+            key={item.slug} 
+            {...item} 
+            openCommentId={openCommentId}
+            onCommentToggle={handleCommentToggle}
+          />
         ))}
       </div>
 
