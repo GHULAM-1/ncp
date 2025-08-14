@@ -1,62 +1,28 @@
 // YouTube Controller
 const https = require('https');
+const http = require('http');
+const configService = require('../services/config.service');
 
-// Content type configurations
-const CONTENT_TYPES = {
-  channels: {
-    searchQuery: "Bangladesh news politics latest",
-    channels: [
-      // Major Bangladeshi News Channels
-      "Somoy TV", "Jamuna TV", "ATN News", "Channel 24", "DBC News",
-      "Independent TV", "Ekattor TV", "News24 BD", "Bangla Vision",
-      "Maasranga TV", "NTV Bangladesh", "Channel i", "Boishakhi TV",
-      "RTV", "Gazi TV", "BanglaTV", "Desh TV", "Global TV News",
-      "SATV", "MY TV",
-      // International News Channels
-      "Al Jazeera English", "BBC News Bangla", "DW Bangla", "TRT World",
-      "BBC News", "VOA Bangla"
-    ],
-    maxResults: 100
-  },
-  talkshows: {
-    playlists: [
-      "PLO_Gwx3ZefnVLAf9ygmFJ0P98T1ONNSb3",
-      "PLvaPMOKVZLDGuiutnNiw3XA6CAThQwYli",
-      "PLCEH8lWGo0VGLaQ8XJppkIqV3mOYPvO93",
-      "PL452k3Pdf5mLIv77RgATVYs6vA3pZQAbJ",
-      "PL452k3Pdf5mJp6XSWDfoh9qiWa3tS5ouU",
-      "PLc_kkJn0dwWvlVQmfEkBcbdXKjdUvEXAo",
-      "PLx-2-qPB6h_tRWE5ze_TXUNnN7vvyVxSO",
-      "PLyIUJWkJsJ9foKbKOBR7ahnG8gU6kNaLq",
-      "PLc0L9mM0RWAv9WXBKghsXDhCA2HAqWKdR",
-      "PLO_Gwx3ZefnVLAf9ygmFJ0P98T1ONNSb3",
-      "PLCEH8lWGo0VFvfvCtmlC61wp658GxIyHT",
-      "PLMtDlkozHHFe2DSSgP976XMOXFHsACs6X",
-      "PLAQmWbFYOcadG83b034uWIeHjuxKuAVU-",
-      "PLFv6mvxs9kPNKuyt_TXOrJ6-OpNNwxAO-",
-      "PLyIUJWkJsJ9dHSeaWuVq-F-kTxp9IB2fA",
-      "PLpqwqQnMCaTvQ3ogr-AEWO06W0mWjoSCF",
-      "PLx4tNTRz-dJ3BgbPRqR6VUoT__FHbqP6b",
-      "PLAHVDBLW1GY4h1MCE5EcMGs6XQGnUEncf",
-      "PLFv6mvxs9kPMwdI2efnIy-oAkFpRM3ZCU"
-    ],
-    maxResults: 100
-  },
-  youtube: {
-    channelUrls: [
-      "https://www.youtube.com/@EtvTalkShow",
-      "https://www.youtube.com/@Counternarrative-TBD",
-      "https://www.youtube.com/@zahedstakebd/videos",
-      "https://www.youtube.com/@PinakiBhattacharya/videos",
-      "https://www.youtube.com/@ATNBanglaTalkShow/videos",
-      "https://www.youtube.com/@zillur_rahman/videos",
-      "https://www.youtube.com/@ThikanayKhaledMuhiuddin/streams",
-      "https://www.youtube.com/@kanaksarwarnews/streams",
-      "https://www.youtube.com/@EliasHossain/streams"
-    ],
-    maxResults: 100
-  }
-};
+// Helper function to make HTTP requests (replaces global fetch)
+async function makeHttpRequest(url) {
+    return new Promise((resolve, reject) => {
+        const protocol = url.startsWith('https:') ? https : http;
+        const req = protocol.request(url, { method: 'GET' }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    resolve({ ok: res.statusCode < 400, status: res.statusCode, json: () => jsonData });
+                } catch (e) {
+                    reject(new Error('Invalid JSON response'));
+                }
+            });
+        });
+        req.on('error', reject);
+        req.end();
+    });
+}
 
 // Main function to get videos by content type
 const getVideosByType = async (req, res) => {
@@ -70,15 +36,18 @@ const getVideosByType = async (req, res) => {
       });
     }
 
-    if (!CONTENT_TYPES[type]) {
+    // Get configuration from SheetDB
+    const contentTypes = await configService.getYouTubeConfig();
+    
+    if (!contentTypes[type]) {
       return res.status(400).json({
         error: "Invalid content type. Available types: channels, talkshows, youtube"
       });
     }
-    console.log(type);
+    console.log(`🎯 Fetching ${type} content from dynamic configuration`);
 
-    const config = CONTENT_TYPES[type];
-    const { maxResults = config.maxResults } = req.query;
+    const config = contentTypes[type];
+    const { maxResults = 100 } = req.query; // Default maxResults is 100
 
     console.log(`🎯 Fetching ${type} content with ${maxResults} max results`);
 
@@ -93,7 +62,7 @@ const getVideosByType = async (req, res) => {
       youtubeResponse = await fetchChannelVideos(config.channelUrls, maxResults, apiKey);
     } else {
       // For other types, fetch from search
-      youtubeResponse = await fetchYouTubeVideos(config.searchQuery, config.channels, maxResults, apiKey);
+      youtubeResponse = await fetchYouTubeVideos(config.channels, maxResults, apiKey);
     }
 
     // Process and combine results
@@ -142,6 +111,17 @@ const getVideosByType = async (req, res) => {
 
   } catch (error) {
     console.error(`Error fetching ${req.query.type} videos:`, error);
+    
+    // Handle YouTube API quota exceeded specifically
+    if (error.message.includes('quota exceeded')) {
+      return res.status(429).json({
+        error: "YouTube API quota exceeded",
+        message: "The YouTube API quota has been exceeded. Please try again later.",
+        retryAfter: "1 hour",
+        suggestion: "Contact administrator to increase API quota or wait for quota reset"
+      });
+    }
+    
     res.status(500).json({
       error: "Failed to fetch videos",
       message: error.message,
@@ -150,7 +130,9 @@ const getVideosByType = async (req, res) => {
 };
 
 // Function to fetch YouTube videos
-const fetchYouTubeVideos = async (searchQuery, channels, maxResults, apiKey) => {
+const fetchYouTubeVideos = async (channels, maxResults, apiKey) => {
+    // Default search query for Bangladesh news
+    const searchQuery = "Bangladesh news politics latest";
   const allVideos = [];
   const maxApiResults = 50; // YouTube API max per request
   const totalRequests = Math.ceil(maxResults * 3 / maxApiResults); // Request more to account for filtering
@@ -163,17 +145,21 @@ const fetchYouTubeVideos = async (searchQuery, channels, maxResults, apiKey) => 
       searchQuery
     )}&part=snippet&order=date&type=video&maxResults=${maxApiResults}&pageToken=${nextPageToken}`;
 
-    const response = await fetch(url).then(res => res.json());
+    const response = await makeHttpRequest(url);
 
-    if (response.error) {
-      throw new Error(`YouTube API Error: ${response.error.message}`);
+    const responseData = response.json();
+    if (responseData.error) {
+      if (responseData.error.code === 403 && responseData.error.message.includes('quota')) {
+        throw new Error('YouTube API quota exceeded. Please try again later or contact administrator.');
+      }
+      throw new Error(`YouTube API Error: ${responseData.error.message}`);
     }
 
-    console.log(`📡 Request ${i + 1}: YouTube API returned ${response.items.length} videos`);
-    allVideos.push(...response.items);
+    console.log(`📡 Request ${i + 1}: YouTube API returned ${response.json().items.length} videos`);
+    allVideos.push(...response.json().items);
     
     // Update nextPageToken for next iteration
-    nextPageToken = response.nextPageToken || '';
+    nextPageToken = response.json().nextPageToken || '';
     
     // If no more pages, break
     if (!nextPageToken) {
@@ -274,28 +260,28 @@ const fetchChannelVideos = async (channelUrls, maxResults, apiKey) => {
       
       // First, get channel ID from handle
       const channelInfoUrl = `https://www.googleapis.com/youtube/v3/channels?key=${apiKey}&forHandle=@${channelHandle}&part=id`;
-      const channelInfo = await fetch(channelInfoUrl).then(res => res.json());
+      const channelInfo = await makeHttpRequest(channelInfoUrl);
       
-      if (channelInfo.error || !channelInfo.items || channelInfo.items.length === 0) {
+      if (!channelInfo.ok) {
         console.warn(`Could not find channel info for: @${channelHandle}`);
         continue;
       }
       
-      const channelId = channelInfo.items[0].id;
+      const channelId = channelInfo.json().items[0].id;
       console.log(`Found channel ID ${channelId} for @${channelHandle}`);
       
       // Now fetch videos from this channel
       const videosUrl = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet&order=date&type=video&maxResults=${Math.min(50, maxResults * 2)}`;
-      const response = await fetch(videosUrl).then(res => res.json());
+      const response = await makeHttpRequest(videosUrl);
       
-      if (response.error) {
-        console.warn(`YouTube API Error for channel @${channelHandle}: ${response.error.message}`);
+      if (!response.ok) {
+        console.warn(`YouTube API Error for channel @${channelHandle}: ${response.json().error.message}`);
         continue;
       }
       
-      console.log(`YouTube API returned ${response.items.length} videos for channel @${channelHandle}`);
+      console.log(`YouTube API returned ${response.json().items.length} videos for channel @${channelHandle}`);
       
-      response.items.forEach(item => {
+      response.json().items.forEach(item => {
         const thumbnails = item.snippet.thumbnails;
         const thumbnail = thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url || "";
         
@@ -327,16 +313,16 @@ const fetchPlaylistVideos = async (playlistIds, maxResults, apiKey) => {
   for (const playlistId of playlistIds) {
     try {
       const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${apiKey}&playlistId=${playlistId}&part=snippet,contentDetails&maxResults=${Math.min(50, maxResults * 2)}`;
-      const response = await fetch(url).then(res => res.json());
+      const response = await makeHttpRequest(url);
 
-      if (response.error) {
-        console.warn(`YouTube API Error for playlist ${playlistId}: ${response.error.message}`);
+      if (!response.ok) {
+        console.warn(`YouTube API Error for playlist ${playlistId}: ${response.json().error.message}`);
         continue;
       }
 
-      console.log(`YouTube API returned ${response.items.length} videos for playlist ${playlistId}`);
+      console.log(`YouTube API returned ${response.json().items.length} videos for playlist ${playlistId}`);
 
-      response.items.forEach(item => {
+      response.json().items.forEach(item => {
         const snippet = item.snippet;
         const thumbnails = snippet.thumbnails;
         const thumbnail = thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url || "";

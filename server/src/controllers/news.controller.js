@@ -1,20 +1,35 @@
 // News Controller
 const https = require('https');
+const configService = require('../services/config.service');
 
 const getBangladeshNews = async (req, res) => {
     try {
-        const NEWS_SOURCES = [           
-            "https://news.google.com/rss/search?q=bangladesh&hl=en-US&gl=US&ceid=US:en",        
-        ];
+        // Get news sources from SheetDB
+        let NEWS_SOURCES = [];
+        try {
+            NEWS_SOURCES = await configService.getNewsConfig();
+            console.log(`📰 Loaded ${NEWS_SOURCES.length} news sources from configuration`);
+        } catch (error) {
+            console.error('❌ Error loading news config, using fallback:', error.message);
+            NEWS_SOURCES = [
+                "https://news.google.com/rss/search?q=bangladesh&hl=en-US&gl=US&ceid=US:en"
+            ];
+        }
+        
+        if (NEWS_SOURCES.length === 0) {
+            return res.status(500).json({
+                error: 'No active news sources configured'
+            });
+        }
 
-        function fetchURL(url) {
+        function makeHttpRequest(url) {
             return new Promise((resolve) => {
                 https.get(url, (res) => {
                     let data = '';
                     res.on('data', chunk => data += chunk);
                     res.on('end', () => resolve(data));
                 }).on('error', (error) => {
-                    console.error('Fetch error:', error);
+                    console.error('HTTP request error:', error);
                     resolve(null);
                 });
             });
@@ -128,8 +143,8 @@ const getBangladeshNews = async (req, res) => {
                             description: description
                         });
                         
-                        console.log(`Added: ${title.substring(0, 50)}... from ${newsSource}`);
-                        console.log(`Link: ${link.substring(0, 100)}...`);
+                        // console.log(`Added: ${title.substring(0, 50)}... from ${newsSource}`);
+                        // console.log(`Link: ${link.substring(0, 100)}...`);
                     }
                 } catch (itemError) {
                     console.error('Error processing item:', itemError);
@@ -145,7 +160,7 @@ const getBangladeshNews = async (req, res) => {
         for (const url of NEWS_SOURCES) {
             try {
                 console.log('Fetching from:', url);
-                const xmlData = await fetchURL(url);
+                const xmlData = await makeHttpRequest(url);
                 
                 if (xmlData) {
                     const news = extractNews(xmlData, 'Google News');

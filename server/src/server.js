@@ -8,6 +8,7 @@ const passport = require("passport");
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
 const rateLimit = require("express-rate-limit");
+// const http = require('http');
 
 // Facebook refresh function (commented out for now)
 // const { refreshFacebookData } = require('./controllers/facebook.controller');
@@ -27,16 +28,38 @@ const corsOptions = {
     "X-Requested-With",
     "Accept",
     "Origin",
+    "User-Agent", // Allow User-Agent header for Apify client
     "Access-Control-Request-Method",
     "Access-Control-Request-Headers",
   ],
 };
+
+// TEMPORARILY DISABLE ALL MIDDLEWARE TO ISOLATE THE ISSUE
+console.log('🧪 TEMPORARILY DISABLED ALL MIDDLEWARE TO ISOLATE APIFY ISSUE');
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors(corsOptions));
-app.use(helmet());
+
+// Configure Helmet to be less restrictive for Apify client
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP temporarily
+  crossOriginEmbedderPolicy: false, // Disable COEP temporarily
+}));
+
+// Allow User-Agent headers specifically for Apify client
+app.use((req, res, next) => {
+  // Allow User-Agent header for Apify client requests
+  res.setHeader('Access-Control-Allow-Headers', 'User-Agent, Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  
+  // Remove any User-Agent restrictions for Apify
+  if (req.headers['user-agent'] && req.headers['user-agent'].includes('apify')) {
+    res.setHeader('X-Allow-User-Agent', 'true');
+  }
+  
+  next();
+});
 
 app.use(morgan("dev"));
 
@@ -91,11 +114,29 @@ const startFacebookRefresh = () => {
       console.log('🕐 [TIMER] Preparing fresh Facebook data for next ISR cycle...');
       const startTime = Date.now();
       
-      // Fetch fresh data from Facebook API and cache it
-      const response = await fetch(`${process.env.SERVER_URL || 'http://localhost:5001'}/api/facebook/posts?maxPosts=50&batch=true`);
+      // Use Node.js HTTP instead of global fetch to avoid browser environment
+      const serverUrl = process.env.SERVER_URL || 'http://localhost:5001';
+      const url = new URL('/api/facebook/posts?maxPosts=50&batch=true', serverUrl);
+      
+      const response = await new Promise((resolve, reject) => {
+        const req = http.request(url, { method: 'GET' }, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            try {
+              const jsonData = JSON.parse(data);
+              resolve({ ok: res.statusCode < 400, status: res.statusCode, json: () => jsonData });
+            } catch (e) {
+              reject(new Error('Invalid JSON response'));
+            }
+          });
+        });
+        req.on('error', reject);
+        req.end();
+      });
       
       if (response.ok) {
-        const data = await response.json();
+        const data = response.json();
         console.log(`✅ [TIMER] Fresh Facebook data prepared: ${data.count} posts in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
         console.log('🔄 [TIMER] Data is now ready for next ISR revalidation cycle');
       } else {
@@ -112,16 +153,79 @@ const startFacebookRefresh = () => {
 // Start the interval when server starts
 startFacebookRefresh();
 
+// Add cron job to trigger Next.js ISR revalidation every 2.5 hours
+let revalidationInterval = null;
+
+const startRevalidationCron = () => {
+  if (revalidationInterval) {
+    clearInterval(revalidationInterval);
+  }
+  
+  // Trigger Next.js ISR revalidation every 2.5 hours (9000000 ms)
+  revalidationInterval = setInterval(async () => {
+    try {
+      console.log('🔄 [CRON] Triggering Next.js ISR revalidation...');
+      const startTime = Date.now();
+      
+      // Call the Next.js revalidation API
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      const response = await fetch(`${clientUrl}/api/revalidate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          secret: process.env.REVALIDATION_SECRET || 'your-secret-key',
+          path: '/'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ [CRON] ISR revalidation triggered successfully in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
+        console.log('🔄 [CRON] Next.js will now rebuild the page with fresh data');
+      } else {
+        console.warn('⚠️ [CRON] ISR revalidation failed with status:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ [CRON] ISR revalidation error:', error.message);
+    }
+  }, 9000000); // 2.5 hours
+  
+  console.log('⏰ [CRON] ISR revalidation scheduled every 2.5 hours');
+};
+
+// Start the revalidation cron job
+startRevalidationCron();
+
 app.get('/api/refresh/facebook', async (req, res) => {
   try {
     console.log('🔄 Manual Facebook refresh requested...');
     const startTime = Date.now();
     
-    // Make a request to your Facebook API
-    const response = await fetch(`${process.env.SERVER_URL || 'http://localhost:5001'}/api/facebook/posts?maxPosts=50&batch=true`);
+    // Use Node.js HTTP instead of global fetch to avoid browser environment
+    const serverUrl = process.env.SERVER_URL || 'http://localhost:5001';
+    const url = new URL('/api/facebook/posts?maxPosts=50&batch=true', serverUrl);
+    
+    const response = await new Promise((resolve, reject) => {
+      const req = http.request(url, { method: 'GET' }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            const jsonData = JSON.parse(data);
+            resolve({ ok: res.statusCode < 400, status: res.statusCode, json: () => jsonData });
+          } catch (e) {
+            reject(new Error('Invalid JSON response'));
+          }
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
     
     if (response.ok) {
-      const data = await response.json();
+      const data = response.json();
       const executionTime = ((Date.now() - startTime) / 1000).toFixed(2);
       
       res.json({

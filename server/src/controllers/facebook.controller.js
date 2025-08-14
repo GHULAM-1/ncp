@@ -1,4 +1,5 @@
 const { ApifyClient } = require('apify-client');
+const configService = require('../services/config.service');
 
 const getFacebookPosts = async (req, res) => {
     try {
@@ -14,42 +15,25 @@ const getFacebookPosts = async (req, res) => {
         const client = new ApifyClient({
             token: apifyToken,
         });
-        const FACEBOOK_SOURCES = [
-            "https://www.facebook.com/1NationalCitizenParty",
-            "https://www.facebook.com/NCPSpeaks",
-            // "https://www.facebook.com/nahidislamjuly",
-            // "https://www.facebook.com/MAYOR.AH.FAISAL",
-            // "https://www.facebook.com/arifulislamadiv1",
-            // "https://www.facebook.com/DoctorTasnimJara",
-            // "https://www.facebook.com/nahidasarwer.niva.5",
-            // "https://www.facebook.com/Munasabduh",
-            // "https://www.facebook.com/abdul.hannan.masud.480487",
-            // "https://www.facebook.com/hasnat.ab1",
-            // "https://www.facebook.com/sarjis.nirob",
-            // "https://www.facebook.com/Asif07M",
-            // "https://www.facebook.com/theredjulybd",
-            // "https://www.facebook.com/shadik.kayem",
-
-
-
-
-
-            // "https://www.facebook.com/Professor.Muhammad.Yunus",
-            // "https://www.facebook.com/ChiefAdviserGOB",
-            // "https://www.facebook.com/shujanbd",
-            // "https://www.facebook.com/tibangladesh",
-            // "https://www.facebook.com/mpitom",
-            // "https://www.facebook.com/asifmudmudofficial07",
-            // "https://www.facebook.com/shadik.kayem",
-            // "https://www.facebook.com/rkrony88",
-            // "https://www.facebook.com/sarjis.nirob",
-            // "https://www.facebook.com/sanjida.tulee",
-            // "https://www.facebook.com/DrTasnimJara",
-            // "https://www.facebook.com/profile.php?id=100091595383906",
-            // "https://www.facebook.com/saerzulkarnain",
-            // "https://www.facebook.com/zahed.urrahman.77",
-            // "https://www.facebook.com/zahedstake"
-        ];
+        
+        // Get Facebook sources from SheetDB
+        let FACEBOOK_SOURCES = [];
+        try {
+            FACEBOOK_SOURCES = await configService.getFacebookConfig();
+            console.log(`📱 Loaded ${FACEBOOK_SOURCES.length} Facebook sources from configuration`);
+        } catch (error) {
+            console.error('❌ Error loading Facebook config, using fallback:', error.message);
+            FACEBOOK_SOURCES = [
+                "https://www.facebook.com/1NationalCitizenParty",
+                "https://www.facebook.com/NCPSpeaks"
+            ];
+        }
+        
+        if (FACEBOOK_SOURCES.length === 0) {
+            return res.status(500).json({
+                error: 'No active Facebook sources configured'
+            });
+        }
 
         const startTime = Date.now();
 
@@ -138,7 +122,7 @@ async function processSingleCall(client, sources, maxPosts, res, startTime, time
 }
 
 async function scrapeBatch(client, urls, postsPerPage = 5) {
-    const totalRequestedPosts = urls.length * 8; // Request more to account for filtering
+    const totalRequestedPosts = urls.length * 8;
     
     const inputData = {
         profile_urls: urls.map(url => ({ url })),
@@ -153,19 +137,88 @@ async function scrapeBatch(client, urls, postsPerPage = 5) {
 
     console.log(`🔧 Requesting ${totalRequestedPosts} posts for ${urls.length} pages (target: ${postsPerPage} per page)`);
 
-    const run = await client.actor('caprolok/facebook-pages-scraper').call(inputData);
+    // Try to start the Apify actor with better error handling
+    let run;
+    try {
+        console.log('🎬 Starting Apify actor...');
+        
+        // Try the call method with better response handling
+        const response = await client.actor('caprolok/facebook-pages-scraper').call(inputData);
+        
+        console.log('🔍 Raw Apify response:', {
+            type: typeof response,
+            hasId: response && response.id,
+            hasData: response && response.data,
+            keys: response ? Object.keys(response) : 'no response',
+            response: response
+        });
+        
+        // Handle different response formats
+        if (response && response.id) {
+            run = response;
+            console.log('✅ Actor started with call() method:', run.id);
+        } else if (response && response.data && response.data.id) {
+            run = response.data;
+            console.log('✅ Actor started with call() method (nested data):', run.id);
+        } else if (typeof response === 'string') {
+            run = { id: response };
+            console.log('✅ Actor started with call() method (string ID):', run.id);
+        } else if (response && response.defaultDatasetId) {
+            run = { id: response.id || 'unknown', defaultDatasetId: response.defaultDatasetId };
+            console.log('✅ Actor started with dataset info:', run);
+        } else {
+            console.log('⚠️ Unexpected response format, trying to extract any useful info...');
+            
+            const possibleId = response?.runId || response?.actorRunId || response?.run?.id || response?.id;
+            if (possibleId) {
+                run = { id: possibleId };
+                console.log('✅ Extracted run ID from response:', run.id);
+            } else {
+                console.log('❌ Could not extract run ID from response');
+                throw new Error('Invalid response format from Apify - no run ID found');
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Failed to start Apify actor:', error.message);
+        console.error('Response details:', error.response || 'No response details');
+        
+        // Try to get recent runs as a fallback
+        try {
+            console.log('🔄 Trying to get recent runs as fallback...');
+            const recentRuns = await client.runs().list({ limit: 5 });
+            if (recentRuns && recentRuns.items && recentRuns.items.length > 0) {
+                const latestRun = recentRuns.items[0];
+                if (latestRun.actorId === 'caprolok/facebook-pages-scraper' && latestRun.status === 'RUNNING') {
+                    run = { id: latestRun.id, defaultDatasetId: latestRun.defaultDatasetId };
+                    console.log('✅ Found running actor as fallback:', run.id);
+                } else {
+                    throw new Error('No suitable recent runs found');
+                }
+            } else {
+                throw new Error('No recent runs available');
+            }
+        } catch (fallbackError) {
+            console.error('❌ Fallback also failed:', fallbackError.message);
+            throw new Error(`Failed to start Apify actor: ${error.message}`);
+        }
+    }
     
-    const runTimeout = 120000; // 2 minutes per batch
+    console.log(`⏳ Waiting for actor run ${run.id} to complete...`);
+    
+    const runTimeout = 300000;
     const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Run timed out')), runTimeout);
+        setTimeout(() => reject(new Error('Run timed out after 5 minutes')), runTimeout);
     });
 
+    console.log('🔄 Waiting for actor to finish...');
     const runPromise = client.run(run.id).waitForFinish();
     await Promise.race([runPromise, timeoutPromise]);
+    console.log('✅ Actor run completed successfully');
 
+    console.log('📊 Fetching results from completed run...');
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
-    
-    console.log(`📊 Retrieved ${items.length} raw items from all sources`);
+    console.log(`📊 Retrieved ${items ? items.length : 0} items from dataset`);
     
     // Transform posts using the ACTUAL caprolok field structure
     const allPosts = items.map((post, index) => {

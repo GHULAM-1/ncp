@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "apify-client": "^2.7.1",
+    "apify-client": "^2.12.6",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.6.1",
     "cookie-parser": "^1.4.6",
@@ -28,6 +28,7 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "serverless-http": "^3.2.0",
+    "sheetdb-node": "^0.0.12",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {
