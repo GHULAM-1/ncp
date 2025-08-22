@@ -98,8 +98,10 @@ async function getUnifiedFeed() {
       return dateB.getTime() - dateA.getTime();
     });
 
+    // Return success even if some APIs failed, as long as we have some data
+    const hasData = allItems.length > 0;
     return {
-      success: true,
+      success: hasData,
       items: allItems,
       sources: {
         youtube: allItems.filter(item => item.platform === 'youtube').length,
@@ -107,15 +109,23 @@ async function getUnifiedFeed() {
         rss: allItems.filter(item => item.platform === 'rss').length,
         total: allItems.length
       },
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      errors: {
+        youtube: youtubeResponse.status === 'rejected' ? 'Failed to fetch' : null,
+        facebook: facebookResponse.status === 'rejected' ? 'Failed to fetch' : null,
+        rss: rssResponse.status === 'rejected' ? 'Failed to fetch' : null
+      }
     };
 
   } catch (error) {
-    console.error('Error fetching unified feed:', error);
+    console.error('Error in unified feed function:', error);
+    // Even if there's a critical error, try to return any data we might have
     return {
       success: false,
       items: [],
-      sources: { youtube: 0, facebook: 0, rss: 0, total: 0 }
+      sources: { youtube: 0, facebook: 0, rss: 0, total: 0 },
+      lastUpdated: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }
