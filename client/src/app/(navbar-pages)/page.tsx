@@ -6,7 +6,7 @@ export const revalidate = 9000;
 // Fetch data from each API directly
 async function getUnifiedFeed() {
   try {
-    const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5001';
+    const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     
     // Fetch data from all sources concurrently
     const [youtubeResponse, facebookResponse, rssResponse] = await Promise.allSettled([
