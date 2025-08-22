@@ -9,93 +9,104 @@ async function getUnifiedFeed() {
   console.log('🏗️ [BUILD] Server URL:', process.env.NEXT_PUBLIC_API_URL);
   
   try {
-    const serverUrl = process.env.NEXT_PUBLIC_API_URL;
-    console.log('🏗️ [BUILD] Starting API calls to:', serverUrl);
+    const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    console.log('🏗️ [BUILD] Starting sequential API calls to:', serverUrl);
     
-    const [youtubeResponse, facebookResponse, rssResponse] = await Promise.allSettled([
-      fetch(`${serverUrl}/api/youtube/videos?type=channels&maxResults=20&page=1&limit=20`),
-      fetch(`${serverUrl}/api/facebook/posts?maxPosts=20&page=1&limit=20`),
-      fetch(`${serverUrl}/api/news/bangladesh?page=1&limit=20`)
-    ]);
+    // Sequential calls to avoid overwhelming the server (deployment-friendly)
+    const youtubeResponse = await fetch(`${serverUrl}/youtube/videos?type=channels&maxResults=20&page=1&limit=20`);
+    const facebookResponse = await fetch(`${serverUrl}/facebook/posts?maxPosts=20&page=1&limit=20`);
+    const rssResponse = await fetch(`${serverUrl}/news/bangladesh?page=1&limit=20`);
     
     console.log('🏗️ [BUILD] API responses received:');
-    console.log('🏗️ [BUILD] YouTube:', youtubeResponse.status);
-    console.log('🏗️ [BUILD] Facebook:', facebookResponse.status);
-    console.log('🏗️ [BUILD] RSS:', rssResponse.status);
+    console.log('🏗️ [BUILD] YouTube:', youtubeResponse.ok ? 'success' : 'failed');
+    console.log('🏗️ [BUILD] Facebook:', facebookResponse.ok ? 'success' : 'failed');
+    console.log('🏗️ [BUILD] RSS:', rssResponse.ok ? 'success' : 'failed');
 
     const allItems = [];
     
     // Process YouTube data
-    if (youtubeResponse.status === 'fulfilled' && youtubeResponse.value.ok) {
-      const data = await youtubeResponse.value.json();
-      if (data.success && data.videos) {
-        const youtubeItems = data.videos.map((video: any, index: number) => ({
-          id: `yt_${video.videoId || index}`,
-          title: video.title,
-          description: video.description || '',
-          link: video.videoUrl || `https://www.youtube.com/watch?v=${video.videoId}`,
-          image: video.thumbnail,
-          date: video.publishedAt,
-          source: video.channelTitle || 'YouTube',
-          platform: 'youtube',
-          type: 'video',
-          engagement: {
-            views: video.viewCount || 0,
-            likes: video.likeCount || 0,
-            comments: video.commentCount || 0
-          }
-        }));
-        allItems.push(...youtubeItems);
+    if (youtubeResponse.ok) {
+      try {
+        const data = await youtubeResponse.json();
+        if (data.success && data.videos) {
+          const youtubeItems = data.videos.map((video: any, index: number) => ({
+            id: `yt_${video.videoId || index}`,
+            title: video.title,
+            description: video.description || '',
+            link: video.videoUrl || `https://www.youtube.com/watch?v=${video.videoId}`,
+            image: video.thumbnail,
+            date: video.publishedAt,
+            source: video.channelTitle || 'YouTube',
+            platform: 'youtube',
+            type: 'video',
+            engagement: {
+              views: video.viewCount || 0,
+              likes: video.likeCount || 0,
+              comments: video.commentCount || 0
+            }
+          }));
+          allItems.push(...youtubeItems);
+        }
+      } catch (error) {
+        console.log('🏗️ [BUILD] Failed to process YouTube data:', error);
       }
     }
 
     // Process Facebook data
-    if (facebookResponse.status === 'fulfilled' && facebookResponse.value.ok) {
-      const data = await facebookResponse.value.json();
-      if (data.success && data.posts) {
-        const facebookItems = data.posts.map((post: any, index: number) => ({
-          id: `fb_${post.postId || index}`,
-          title: post.title,
-          description: post.description || '',
-          link: post.url || '#',
-          image: post.image,
-          date: post.publishedAt,
-          source: post.author || 'Facebook',
-          platform: 'facebook',
-          type: post.type || 'post',
-          profilePicture: post.profilePicture || null,
-          engagement: {
-            reactions: post.engagement?.totalReactions || 0,
-            likes: post.engagement?.likes || 0,
-            comments: post.engagement?.comments || 0,
-            shares: post.engagement?.shares || 0
-          }
-        }));
-        allItems.push(...facebookItems);
+    if (facebookResponse.ok) {
+      try {
+        const data = await facebookResponse.json();
+        if (data.success && data.posts) {
+          const facebookItems = data.posts.map((post: any, index: number) => ({
+            id: `fb_${post.postId || index}`,
+            title: post.title,
+            description: post.description || '',
+            link: post.url || '#',
+            image: post.image,
+            date: post.publishedAt,
+            source: post.author || 'Facebook',
+            platform: 'facebook',
+            type: post.type || 'post',
+            profilePicture: post.profilePicture || null,
+            engagement: {
+              reactions: post.engagement?.totalReactions || 0,
+              likes: post.engagement?.likes || 0,
+              comments: post.engagement?.comments || 0,
+              shares: post.engagement?.shares || 0
+            }
+          }));
+          allItems.push(...facebookItems);
+        }
+      } catch (error) {
+        console.log('🏗️ [BUILD] Failed to process Facebook data:', error);
       }
     }
 
     // Process RSS data
-    if (rssResponse.status === 'fulfilled' && rssResponse.value.ok) {
-      const data = await rssResponse.value.json();
-      if (data.success && data.news) {
-        const rssItems = data.news.map((item: any, index: number) => ({
-          id: `rss_${index}`,
-          title: item.title,
-          description: item.description || '',
-          link: item.link,
-          image: null, // RSS typically doesn't have images
-          date: item.date,
-          source: item.source || 'RSS Feed',
-          platform: 'rss',
-          type: 'news',
-          engagement: {
-            views: 0,
-            likes: 0,
-            comments: 0
-          }
-        }));
-        allItems.push(...rssItems);
+    if (rssResponse.ok) {
+      try {
+        const data = await rssResponse.json();
+        if (data.success && data.news) {
+          const rssItems = data.news.map((item: any, index: number) => ({
+            id: `rss_${index}`,
+            title: item.title,
+            description: item.description || '',
+            link: item.link,
+            image: null, // RSS typically doesn't have images
+            date: item.date,
+            source: item.source || 'RSS Feed',
+            platform: 'rss',
+            type: 'news',
+            engagement: {
+              views: 0,
+              likes: 0,
+              comments: 0
+            }
+          }));
+          allItems.push(...rssItems);
+        }
+      } catch (error) {
+        console.log('🏗️ [BUILD] Failed to process RSS data:', error);
       }
     }
 
@@ -119,9 +130,9 @@ async function getUnifiedFeed() {
       },
       lastUpdated: new Date().toISOString(),
       errors: {
-        youtube: youtubeResponse.status === 'rejected' ? 'Failed to fetch' : null,
-        facebook: facebookResponse.status === 'rejected' ? 'Failed to fetch' : null,
-        rss: rssResponse.status === 'rejected' ? 'Failed to fetch' : null
+        youtube: !youtubeResponse.ok ? 'Failed to fetch' : null,
+        facebook: !facebookResponse.ok ? 'Failed to fetch' : null,
+        rss: !rssResponse.ok ? 'Failed to fetch' : null
       }
     };
 
