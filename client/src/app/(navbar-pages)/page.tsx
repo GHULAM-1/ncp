@@ -9,8 +9,7 @@ async function getUnifiedFeed() {
   console.log('🏗️ [BUILD] Server URL:', process.env.NEXT_PUBLIC_API_URL);
   
   try {
-    const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-    // Fetch data from all sources concurrently
+    const serverUrl = process.env.NEXT_PUBLIC_API_URL;
     console.log('🏗️ [BUILD] Starting API calls to:', serverUrl);
     
     const [youtubeResponse, facebookResponse, rssResponse] = await Promise.allSettled([
