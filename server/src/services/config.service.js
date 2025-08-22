@@ -92,6 +92,9 @@ class ConfigService {
             
             const config = this.parseYouTubeConfig(data);
             
+            // Debug: Log the parsed configuration
+            console.log('🔧 Parsed YouTube config:', JSON.stringify(config, null, 2));
+            
             this.cache.youtube = config;
             this.cache.lastUpdated = Date.now();
             
@@ -217,39 +220,66 @@ class ConfigService {
         }
     }
 
-    parseYouTubeConfig(data) {
-        const config = {
-            channels: {},
-            talkshows: {},
-            youtube: {}
-        };
+         parseYouTubeConfig(data) {
+         const config = {
+             channels: { channels: [], playlists: [], channelUrls: [] },
+             talkshows: { channels: [], playlists: [], channelUrls: [] },
+             youtube: { channels: [], playlists: [], channelUrls: [] }
+         };
 
-        data.forEach(row => {
-            const type = row.type;
-            if (config[type]) {
-                config[type] = {
-                    channels: row.channels ? row.channels.split(',').map(c => c.trim()).filter(c => c) : [],
-                    playlists: row.playlists ? row.playlists.split(',').map(p => p.trim()).filter(p => p) : [],
-                    channelUrls: row.channelUrls ? row.channelUrls.split(',').map(u => u.trim()).filter(u => u) : []
-                };
-            }
-        });
+         // Your SheetDB has columns: channels, playlists, channelUrls
+         // Each row represents one content type - we need to accumulate all rows
+         data.forEach(row => {
+             // Check if this row has channels (news channels)
+             if (row.channels && row.channels.trim()) {
+                 const channelList = row.channels.split(',').map(c => c.trim()).filter(c => c);
+                 if (config.channels.channels) {
+                     // Append to existing channels
+                     config.channels.channels.push(...channelList);
+                 } else {
+                     // Initialize channels
+                     config.channels.channels = channelList;
+                 }
+             }
+             
+             // Check if this row has playlists (talkshows)
+             if (row.playlists && row.playlists.trim()) {
+                 const playlistList = row.playlists.split(',').map(p => p.trim()).filter(p => p);
+                 if (config.talkshows.playlists) {
+                     // Append to existing playlists
+                     config.talkshows.playlists.push(...playlistList);
+                 } else {
+                     // Initialize playlists
+                     config.talkshows.playlists = playlistList;
+                 }
+             }
+             
+             // Check if this row has channel URLs (youtube channels)
+             if (row.channelUrls && row.channelUrls.trim()) {
+                 const urlList = row.channelUrls.split(',').map(u => u.trim()).filter(u => u);
+                 if (config.youtube.channelUrls) {
+                     // Append to existing channel URLs
+                     config.youtube.channelUrls.push(...urlList);
+                 } else {
+                     // Initialize channel URLs
+                     config.youtube.channelUrls = urlList;
+                 }
+             }
+         });
 
-        // Validate and ensure all required fields exist
-        Object.keys(config).forEach(type => {
-            if (!config[type].channels && type === 'channels') {
-                config[type].channels = [];
-            }
-            if (!config[type].playlists && type === 'talkshows') {
-                config[type].playlists = [];
-            }
-            if (!config[type].channelUrls && type === 'youtube') {
-                config[type].channelUrls = [];
-            }
-        });
+         // Ensure all required fields exist with defaults
+         if (!config.channels.channels || config.channels.channels.length === 0) {
+             config.channels.channels = [];
+         }
+         if (!config.talkshows.playlists || config.talkshows.playlists.length === 0) {
+             config.talkshows.playlists = [];
+         }
+         if (!config.youtube.channelUrls || config.youtube.channelUrls.length === 0) {
+             config.youtube.channelUrls = [];
+         }
 
-        return config;
-    }
+         return config;
+     }
 
     isCacheValid(type) {
         return this.cache[type] && 

@@ -38,6 +38,7 @@ const getVideosByType = async (req, res) => {
 
     // Get configuration from SheetDB
     const contentTypes = await configService.getYouTubeConfig();
+         // console.log("here areeeee",contentTypes); // Removed verbose logging
     
     if (!contentTypes[type]) {
       return res.status(400).json({
@@ -46,61 +47,66 @@ const getVideosByType = async (req, res) => {
     }
     console.log(`🎯 Fetching ${type} content from dynamic configuration`);
 
-    const config = contentTypes[type];
-    const { maxResults = 100 } = req.query; // Default maxResults is 100
+         const config = contentTypes[type];
+     const { maxResults = 10 } = req.query; // Default maxResults is 100
 
-    console.log(`🎯 Fetching ${type} content with ${maxResults} max results`);
+     console.log(`🎯 Fetching ${type} content with ${maxResults} max results`);
+     console.log(`🔧 Config for ${type}:`, JSON.stringify(config, null, 2));
 
     let youtubeResponse = [];
     let playlistResponse = [];
 
-    // For talkshows, only fetch from playlists
-    if (type === 'talkshows' && config.playlists) {
-      playlistResponse = await fetchPlaylistVideos(config.playlists, maxResults, apiKey);
-    } else if (type === 'youtube' && config.channelUrls) {
+         // For talkshows, only fetch from playlists
+     if (type === 'talkshows' && config.playlists) {
+       playlistResponse = await fetchPlaylistVideos(config.playlists, maxResults, apiKey);
+       console.log("📺 Playlist ID:", config.playlists[0]);
+     } else if (type === 'youtube' && config.channelUrls) {
       // For youtube type, fetch from specific channel URLs
-      youtubeResponse = await fetchChannelVideos(config.channelUrls, maxResults, apiKey);
+             youtubeResponse = await fetchChannelVideos(config.channelUrls, maxResults, apiKey);
+       console.log("📱 Channel URL:", config.channelUrls[0]);
     } else {
-      // For other types, fetch from search
-      youtubeResponse = await fetchYouTubeVideos(config.channels, maxResults, apiKey);
+           // For other types, fetch from search
+     if (!config.channels || config.channels.length === 0) {
+       console.log(`⚠️ No channels configured for ${type}, using fallback search`);
+       youtubeResponse = await fetchYouTubeVideos(['Bangladesh news'], maxResults, apiKey);
+     } else {
+                youtubeResponse = await fetchYouTubeVideos(config.channels, maxResults, apiKey);
+         console.log("📺 Channels:", config.channels.join(", "));
+     }
     }
 
-    // Process and combine results
-    const allVideos = [...youtubeResponse, ...playlistResponse];
-    
-    // Remove duplicates and sort
-    const uniqueVideos = allVideos.filter((video, index, self) => 
-      index === self.findIndex(v => v.videoId === video.videoId)
-    );
-
-    uniqueVideos.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+         // Process and combine results
+     const allVideos = [...youtubeResponse, ...playlistResponse];
+     
+     // Sort by date (no deduplication needed since we handle it per channel)
+     allVideos.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
     // Get pagination parameters
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 15;
+    const limit = parseInt(req.query.limit) || 5;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
 
-    const sourceInfo = type === 'talkshows' 
-      ? `${playlistResponse.length} from playlists`
-      : `${youtubeResponse.length} from YouTube search, ${playlistResponse.length} from playlists`;
-    
-    console.log(`✅ ${type}: ${uniqueVideos.length} total videos (${sourceInfo})`);
-    console.log(`📄 Page ${page}: showing ${startIndex + 1}-${Math.min(endIndex, uniqueVideos.length)} of ${uniqueVideos.length}`);
+         const sourceInfo = type === 'talkshows' 
+       ? `${playlistResponse.length} from playlists`
+       : `${youtubeResponse.length} from YouTube search, ${playlistResponse.length} from playlists`;
+     
+     console.log(`✅ ${type}: ${allVideos.length} total videos (${sourceInfo})`);
+     console.log(`📄 Page ${page}: showing ${startIndex + 1}-${Math.min(endIndex, allVideos.length)} of ${allVideos.length}`);
 
-    res.json({
-      success: true,
-      type: type,
-      count: uniqueVideos.length,
-      videos: uniqueVideos.slice(startIndex, endIndex),
-      page: page,
-      limit: limit,
-      hasMore: endIndex < uniqueVideos.length,
-      sources: {
-        youtube: youtubeResponse.length,
-        playlists: playlistResponse.length,
-        total: uniqueVideos.length
-      },
+         res.json({
+       success: true,
+       type: type,
+       count: allVideos.length,
+       videos: allVideos.slice(startIndex, endIndex),
+       page: page,
+       limit: limit,
+       hasMore: endIndex < allVideos.length,
+       sources: {
+         youtube: youtubeResponse.length,
+         playlists: playlistResponse.length,
+         total: allVideos.length
+       },
       config: {
         searchQuery: config.searchQuery || null,
         channelsCount: config.channels ? config.channels.length : 0,
@@ -129,104 +135,87 @@ const getVideosByType = async (req, res) => {
   }
 };
 
-// Function to fetch YouTube videos
+// Function to fetch YouTube videos directly from specific channels
 const fetchYouTubeVideos = async (channels, maxResults, apiKey) => {
-    // Default search query for Bangladesh news
-    const searchQuery = "Bangladesh news politics latest";
   const allVideos = [];
-  const maxApiResults = 50; // YouTube API max per request
-  const totalRequests = Math.ceil(maxResults * 3 / maxApiResults); // Request more to account for filtering
   
-  console.log(`🔄 Making ${totalRequests} requests to get more videos...`);
-  
-  let nextPageToken = '';
-  for (let i = 0; i < totalRequests; i++) {
-    const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${encodeURIComponent(
-      searchQuery
-    )}&part=snippet&order=date&type=video&maxResults=${maxApiResults}&pageToken=${nextPageToken}`;
-
-    const response = await makeHttpRequest(url);
-
-    const responseData = response.json();
-    if (responseData.error) {
-      if (responseData.error.code === 403 && responseData.error.message.includes('quota')) {
-        throw new Error('YouTube API quota exceeded. Please try again later or contact administrator.');
-      }
-      throw new Error(`YouTube API Error: ${responseData.error.message}`);
-    }
-
-    console.log(`📡 Request ${i + 1}: YouTube API returned ${response.json().items.length} videos`);
-    allVideos.push(...response.json().items);
-    
-    // Update nextPageToken for next iteration
-    nextPageToken = response.json().nextPageToken || '';
-    
-    // If no more pages, break
-    if (!nextPageToken) {
-      console.log('No more pages available from YouTube API');
-      break;
-    }
-    
-    // Small delay to be respectful to API
-    if (i < totalRequests - 1) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+  // Fetch videos directly from each channel instead of general search
+  for (const channelName of channels) {
+    try {
+      console.log(`🔍 Fetching videos from channel: "${channelName}"`);
+      
+                     // Use channel-specific search to get unique videos from each channel
+        const searchQueries = [
+          `${channelName} news`,
+          `${channelName} latest`,
+          `${channelName} bulletin`,
+          `${channelName} update`
+        ];
+        
+        let channelVideos = [];
+        
+        for (const query of searchQueries) {
+          const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${encodeURIComponent(query)}&part=snippet&order=date&type=video&maxResults=${Math.min(15, maxResults)}`;
+          
+          const response = await makeHttpRequest(url);
+          
+          if (response.json().error) {
+            if (response.json().error.code === 403 && response.json().error.message.includes('quota')) {
+              throw new Error('YouTube API quota exceeded. Please try again later or contact administrator.');
+            }
+            throw new Error(`YouTube API Error: ${response.json().error.message}`);
+          }
+          
+          const videos = response.json().items;
+          
+          // Filter videos that are actually from this channel
+          const filteredVideos = videos.filter(video => 
+            video.snippet.channelTitle.toLowerCase().includes(channelName.toLowerCase()) ||
+            channelName.toLowerCase().includes(video.snippet.channelTitle.toLowerCase())
+          );
+          
+          // Add only videos we don't already have
+          filteredVideos.forEach(video => {
+            const exists = channelVideos.some(existing => existing.videoId === video.videoId);
+            if (!exists) {
+              channelVideos.push(video);
+            }
+          });
+          
+          // Small delay to be respectful to API
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // If we have enough videos, break early
+          if (channelVideos.length >= maxResults) break;
+        }
+        
+        console.log(`✅ Found ${channelVideos.length} unique videos from "${channelName}"`);
+        allVideos.push(...channelVideos);
+        
+        // Small delay to be respectful to API
+        await new Promise(resolve => setTimeout(resolve, 100));
+      
+    } catch (error) {
+      console.error(`Error fetching videos for channel "${channelName}":`, error.message);
     }
   }
-
-  console.log(`🎯 Total videos from YouTube API: ${allVideos.length}`);
-
-  // Debug: Show all channel titles from API response
-  const allChannelTitles = [...new Set(allVideos.map(v => v.snippet.channelTitle))];
-  console.log('🔍 All channel titles from API response:', allChannelTitles);
-
-  // Filter by channels with more lenient matching
-  let filteredVideos = allVideos.filter((item) => {
-    const channelTitle = item.snippet.channelTitle;
+  
+     console.log(`🎯 Total videos from all channels: ${allVideos.length}`);
+   
+       // Log channel distribution
+    const channelCounts = {};
+    allVideos.forEach(video => {
+      const channel = video.snippet.channelTitle;
+      channelCounts[channel] = (channelCounts[channel] || 0) + 1;
+    });
+    console.log('📊 Channel distribution:', channelCounts);
     
-    // Method 1: Exact substring matching
-    let isMatch = channels.some((channel) =>
-      channelTitle.toLowerCase().includes(channel.toLowerCase())
-    );
+    // Sort by date (no deduplication needed since we handle it per channel)
+    allVideos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
     
-    // Method 2: If no exact match, try partial matching
-    if (!isMatch) {
-      isMatch = channels.some((channel) => {
-        const channelWords = channel.toLowerCase().split(' ');
-        const titleWords = channelTitle.toLowerCase().split(' ');
-        return channelWords.some(word => 
-          titleWords.some(titleWord => titleWord.includes(word) || word.includes(titleWord))
-        );
-      });
-    }
-    
-    // Method 3: Try matching without spaces and special characters
-    if (!isMatch) {
-      isMatch = channels.some((channel) => {
-        const cleanChannel = channel.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const cleanTitle = channelTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return cleanTitle.includes(cleanChannel) || cleanChannel.includes(cleanTitle);
-      });
-    }
-    
-    if (!isMatch) {
-      console.log(`❌ No match for: "${channelTitle}"`);
-    } else {
-      console.log(`✅ Matched: "${channelTitle}"`);
-    }
-    
-    return isMatch;
-  });
-
-  console.log(`After channel filtering: ${filteredVideos.length} videos`);
-  console.log('✅ Matched channels:', [...new Set(filteredVideos.map(v => v.snippet.channelTitle))]);
-
-  // Fallback: if no channels match, return top videos
-  if (filteredVideos.length === 0) {
-    console.log('No videos found from specified channels, falling back to top videos');
-    filteredVideos = allVideos.slice(0, Math.min(maxResults, allVideos.length));
-  }
-
-  return filteredVideos.map((item) => {
+    console.log(`✅ Final videos: ${allVideos.length}`);
+  
+     return allVideos.map((item) => {
     const thumbnails = item.snippet.thumbnails;
     const thumbnail = thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url || "";
 
@@ -341,55 +330,6 @@ const fetchPlaylistVideos = async (playlistIds, maxResults, apiKey) => {
       });
     } catch (error) {
       console.error(`Error fetching playlist ${playlistId}:`, error);
-    }
-  }
-  
-  return videos;
-};
-
-
-// Function to extract video links from Google Alerts
-const extractVideoLinks = (xmlData) => {
-  if (!xmlData) return [];
-  
-  const videos = [];
-  const itemRegex = /<item>(.*?)<\/item>/gs;
-  let match;
-  
-  while ((match = itemRegex.exec(xmlData)) !== null) {
-    const item = match[1];
-    
-    try {
-      const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/s);
-      const title = titleMatch ? (titleMatch[1] || titleMatch[2] || '').trim() : '';
-      
-      const linkMatch = item.match(/<link>(.*?)<\/link>/s);
-      const link = linkMatch ? linkMatch[1].trim() : '';
-      
-      const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/s);
-      const description = descMatch ? (descMatch[1] || descMatch[2] || '') : '';
-      
-      const youtubeMatch = description.match(/(https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/[^\s]+)/i);
-      if (youtubeMatch) {
-        const videoUrl = youtubeMatch[1];
-        const videoIdMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-        
-        if (videoIdMatch) {
-          const videoId = videoIdMatch[1];
-          videos.push({
-            title: title,
-            videoId: videoId,
-            url: videoUrl,
-            publishedAt: new Date().toISOString(),
-            thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-            description: description.replace(/<[^>]*>/g, '').substring(0, 200),
-            channelTitle: 'Google Alerts',
-            source: 'Google Alerts'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error processing Google Alerts item:', error);
     }
   }
   

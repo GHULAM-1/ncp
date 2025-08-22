@@ -25,7 +25,6 @@ const getFacebookPosts = async (req, res) => {
             console.error('❌ Error loading Facebook config, using fallback:', error.message);
             FACEBOOK_SOURCES = [
                 "https://www.facebook.com/1NationalCitizenParty",
-                "https://www.facebook.com/NCPSpeaks"
             ];
         }
         
@@ -242,6 +241,9 @@ async function scrapeBatch(client, urls, postsPerPage = 5) {
         // Extract source URL from user profile
         const source = post.user?.profile_url || post.user?.url || 'Unknown';
         
+        // Extract profile picture from user object
+        const profilePicture = post.user?.profile_picture?.uri || null;
+        
         const transformedPost = {
             title: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : `Post by ${author}`,
             postId: post.post_id || `fb_${Date.now()}_${Math.random()}`,
@@ -251,6 +253,7 @@ async function scrapeBatch(client, urls, postsPerPage = 5) {
             description: text || `[Post without text content by ${author}]`,
             author: author,
             source: source,
+            profilePicture: profilePicture,
             engagement: {
                 likes: post.top_reactions?.Like || 0,
                 love: post.top_reactions?.Love || 0,
