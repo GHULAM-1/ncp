@@ -5,15 +5,25 @@ import { NewsCardProps } from "@/types/news-card-type";
 export const revalidate = 9000;
 // Fetch data from each API directly
 async function getUnifiedFeed() {
+  console.log('🏗️ [BUILD] getUnifiedFeed function started');
+  console.log('🏗️ [BUILD] Server URL:', process.env.NEXT_PUBLIC_API_URL);
+  
   try {
     const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     
     // Fetch data from all sources concurrently
+    console.log('🏗️ [BUILD] Starting API calls to:', serverUrl);
+    
     const [youtubeResponse, facebookResponse, rssResponse] = await Promise.allSettled([
       fetch(`${serverUrl}/api/youtube/videos?type=channels&maxResults=20&page=1&limit=20`),
       fetch(`${serverUrl}/api/facebook/posts?maxPosts=20&page=1&limit=20`),
       fetch(`${serverUrl}/api/news/bangladesh?page=1&limit=20`)
     ]);
+    
+    console.log('🏗️ [BUILD] API responses received:');
+    console.log('🏗️ [BUILD] YouTube:', youtubeResponse.status);
+    console.log('🏗️ [BUILD] Facebook:', facebookResponse.status);
+    console.log('🏗️ [BUILD] RSS:', rssResponse.status);
 
     const allItems = [];
     
