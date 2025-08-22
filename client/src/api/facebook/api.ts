@@ -9,6 +9,7 @@ export interface FacebookPost {
   description: string;
   author: string;
   source: string;
+  profilePicture?: string | null;
   engagement: {
     likes: number;
     comments: number;

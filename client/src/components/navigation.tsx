@@ -9,7 +9,7 @@ const Navigation: React.FC = () => {
 
   return (
     <nav className="flex items-center w-full sm:justify-center">
-      <div className="flex items-center whitespace-nowrap">
+      <div className="flex items-end mt-1 whitespace-nowrap">
         <Link href="/">
           <NavItem label="Home" active={pathname === "/"} />
         </Link>

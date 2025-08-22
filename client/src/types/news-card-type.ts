@@ -12,6 +12,7 @@ export interface NewsCardProps {
   date?: string;
   platform?: 'youtube' | 'facebook' | 'rss';
   type?: 'video' | 'post' | 'news';
+  profilePicture?: string | null;
   engagement?: {
     views?: number;
     likes?: number;

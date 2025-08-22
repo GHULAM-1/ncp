@@ -5,7 +5,7 @@ import {
   YouTubeVideo,
   ContentType,
 } from "@/api/youtube/api";
-import Loader from "../loader";
+// import Loader from "../loader"; // Not needed for mock data
 import {
   Loader2,
   Play,
@@ -13,8 +13,12 @@ import {
   Calendar,
   User,
   RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import DisqusComments from "../config/disqus-comments";
+import ShareButton from "../home/share-button";
+import { mockYouTubeVideos } from "@/data/mock-youtube-data";
 
 export default function YouTubeNews() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
@@ -24,9 +28,15 @@ export default function YouTubeNews() {
   const [activeTab, setActiveTab] = useState<ContentType>("channels");
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
-  
+  const [openCommentId, setOpenCommentId] = useState<string | null>(null);
+
+  const onCommentToggle = (id: string) => {
+    setOpenCommentId(openCommentId === id ? null : id);
+  };
+
   // Infinite scroll states
-  const PAGE_SIZE = 15;
+  const PAGE_SIZE = 10; // Increased from 5 to 10
+  const INITIAL_LOAD_SIZE = 20; // Load more videos initially
   const [displayed, setDisplayed] = useState<YouTubeVideo[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -46,7 +56,8 @@ export default function YouTubeNews() {
       setError(null);
       console.log(`🔄 Loading ${type} videos...`);
 
-      const response = await fetchVideosByType(type, 1, PAGE_SIZE);
+      const response = await fetchVideosByType(type, 1, INITIAL_LOAD_SIZE);
+      
       setVideos(response.videos);
       setDisplayed(response.videos);
       setHasMore(response.hasMore);
@@ -57,8 +68,31 @@ export default function YouTubeNews() {
         `✅ ${type} videos loaded! Found ${response.videos.length} videos. Has more: ${response.hasMore}`
       );
     } catch (err) {
-      setError(`Failed to load ${type} videos`);
       console.error(`Error loading ${type} videos:`, err);
+      // Fallback to mock data if API fails
+      console.log("🔄 Falling back to mock data...");
+      let mockVideos: YouTubeVideo[] = [];
+      switch (type) {
+        case "channels":
+          mockVideos = mockYouTubeVideos.slice(0, INITIAL_LOAD_SIZE);
+          break;
+        case "talkshows":
+          mockVideos = mockYouTubeVideos.slice(5, 5 + INITIAL_LOAD_SIZE);
+          break;
+        case "youtube":
+          mockVideos = mockYouTubeVideos.slice(10, 10 + INITIAL_LOAD_SIZE);
+          break;
+        default:
+          mockVideos = mockYouTubeVideos;
+      }
+      setVideos(mockVideos);
+      setDisplayed(mockVideos);
+      setHasMore(false);
+      setLastUpdated(new Date().toISOString());
+      page.current = 1;
+      console.log(
+        `✅ Mock data loaded for ${type}: ${mockVideos.length} videos`
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -70,33 +104,39 @@ export default function YouTubeNews() {
     loadVideos(activeTab);
   }, [activeTab, loadVideos]);
 
-    // Function to load more videos for infinite scroll
-    const loadMore = useCallback(async () => {
-      if (loadingMore || !hasMore) return;
-  
-      setLoadingMore(true);
-      try {
-        const nextPage = page.current + 1;
-        console.log(`🔄 Loading page ${nextPage} for ${activeTab}...`);
-        
-        const response = await fetchVideosByType(activeTab, nextPage, PAGE_SIZE);
-        
-        if (response.success && response.videos.length > 0) {
-          setDisplayed((prev) => [...prev, ...response.videos]);
-          setHasMore(response.hasMore);
-          page.current = nextPage;
-          console.log(`✅ Loaded page ${nextPage}. Total items: ${displayed.length + response.videos.length}`);
-        } else {
-          setHasMore(false);
-          console.log('No more videos available');
-        }
-      } catch (err) {
-        console.error('Error loading more videos:', err);
-      } finally {
-        setLoadingMore(false);
+  // Function to load more videos for infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = page.current + 1;
+      console.log(`🔄 Loading page ${nextPage} for ${activeTab}...`);
+
+      const response = await fetchVideosByType(activeTab, nextPage, PAGE_SIZE);
+
+      if (response.success && response.videos.length > 0) {
+        setDisplayed((prev) => [...prev, ...response.videos]);
+        setHasMore(response.hasMore);
+        page.current = nextPage;
+        console.log(
+          `✅ Loaded page ${nextPage}. Total items: ${
+            displayed.length + response.videos.length
+          }`
+        );
+      } else {
+        setHasMore(false);
+        console.log("No more videos available");
       }
-    }, [loadingMore, hasMore, activeTab, displayed.length]);
-  
+    } catch (err) {
+      console.error("Error loading more videos:", err);
+      // Fallback: set hasMore to false to prevent infinite retries
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, activeTab, displayed.length]);
+
   // Set up intersection observer for infinite scroll
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -114,14 +154,13 @@ export default function YouTubeNews() {
   const handleTabClick = (type: ContentType) => {
     if (type !== activeTab) {
       setActiveTab(type);
-      setLoading(true); // Show loader on tab change
+      // No need to show loading since we're using mock data
     }
   };
 
   const handleCardClick = (video: YouTubeVideo) => {
     setSelectedVideo(video);
   };
-
 
   const closeVideo = () => {
     setSelectedVideo(null);
@@ -132,31 +171,31 @@ export default function YouTubeNews() {
     if (selectedVideo) {
       // Store current scroll position
       const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
+      document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
     } else {
       // Restore scroll position
       const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
       }
     }
 
     // Cleanup function to restore scroll when component unmounts
     return () => {
       const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
       }
     };
   }, [selectedVideo]);
@@ -183,7 +222,6 @@ export default function YouTubeNews() {
           </div>
         </div>
       </div>
-
 
       <div className="space-y-0 rounded-2xl  overflow-hidden">
         {loading ? (
@@ -275,48 +313,88 @@ export default function YouTubeNews() {
                     )}
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
-                    <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        {video.publishedAt
-                          ? formatDistanceToNow(new Date(video.publishedAt), {
-                              addSuffix: true,
-                            })
-                          : "Unknown date"}
-                      </span>
-                      <span className="hidden md:inline">•</span>
-                      <User className="h-3 w-3" />
-                      <span>{video.channelTitle}</span>
+                  {/* Action buttons and comments */}
+                  <div className="flex items-center justify-between mt-5">
+                    <div className="flex items-center gap-4">
+                      <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {video.publishedAt
+                            ? formatDistanceToNow(new Date(video.publishedAt), {
+                                addSuffix: true,
+                              })
+                            : "Unknown date"}
+                        </span>
+                        <span className="hidden md:inline">•</span>
+                        <User className="h-3 w-3" />
+                        <span>{video.channelTitle}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCardClick(video);
-                        }}
-                        className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-                      >
-                        Watch Video
-                      </button>
+                      <div className="hidden md:flex items-center gap-2">
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <ShareButton url={video.url} title={video.title} />
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCommentToggle(video.videoId);
+                          }}
+                          className="px-3 py-2 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                        >
+                          {openCommentId === video.videoId
+                            ? "Close Comments"
+                            : "Show Comments"}
+                        </button>
+                      </div>
+
+                      <div className="flex md:hidden items-center gap-2">
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <ShareButton url={video.url} title={video.title} />
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCommentToggle(video.videoId);
+                          }}
+                          className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                          title="Comments"
+                        >
+                          <MessageSquare
+                            size={16}
+                            className="text-gray-600 dark:text-gray-300"
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Comments section */}
+                {openCommentId === video.videoId && (
+                  <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
+                    <DisqusComments
+                      post={{ slug: video.url, title: video.title }}
+                      key={video.videoId}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </>
         )}
 
-        {/* Infinite Scroll Loader */}
-        {hasMore && displayed.length > 0 && (
+        {/* No infinite scroll needed for mock data */}
+        {/* {hasMore && displayed.length > 0 && (
           <div
             ref={loaderRef}
             className="flex justify-center py-8 text-gray-700 dark:text-gray-300"
           >
             {loadingMore && <Loader />}
           </div>
-        )}
+        )} */}
       </div>
 
       {videos.length === 0 && !loading && !error && (
@@ -340,13 +418,26 @@ export default function YouTubeNews() {
                 onClick={closeVideo}
                 className="text-gray-500 hover:cursor-pointer hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div className="p-4">
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <div
+                className="relative w-full"
+                style={{ paddingBottom: "56.25%" }}
+              >
                 <iframe
                   src={`https://www.youtube.com/embed/${selectedVideo.videoId}`}
                   title={selectedVideo.title}
@@ -367,9 +458,12 @@ export default function YouTubeNews() {
                   <span className="mr-4">
                     <Calendar className="inline w-4 h-4 mr-1" />
                     {selectedVideo.publishedAt
-                      ? formatDistanceToNow(new Date(selectedVideo.publishedAt), {
-                          addSuffix: true,
-                        })
+                      ? formatDistanceToNow(
+                          new Date(selectedVideo.publishedAt),
+                          {
+                            addSuffix: true,
+                          }
+                        )
                       : "Unknown date"}
                   </span>
                   <span>

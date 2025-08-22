@@ -3,7 +3,6 @@ import { NewsCardProps } from "@/types/news-card-type";
 
 // ISR Configuration - revalidate every 2.5 hours (9000 seconds)
 export const revalidate = 9000;
-
 // Fetch data from each API directly
 async function getUnifiedFeed() {
   try {
@@ -56,6 +55,7 @@ async function getUnifiedFeed() {
           source: post.author || 'Facebook',
           platform: 'facebook',
           type: post.type || 'post',
+          profilePicture: post.profilePicture || null,
           engagement: {
             reactions: post.engagement?.totalReactions || 0,
             likes: post.engagement?.likes || 0,
@@ -133,6 +133,7 @@ export default async function Page() {
     source: item.source,
     platform: item.platform,
     type: item.type,
+    profilePicture: item.profilePicture,
     engagement: item.engagement,
     slug: `${item.platform}-${index}`,
     id: item.id
