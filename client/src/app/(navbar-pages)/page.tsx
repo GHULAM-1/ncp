@@ -38,9 +38,9 @@ async function getUnifiedFeed() {
     
     // Run calls in parallel with timeouts so build never hangs >60s
     const [youtubeResponse, facebookResponse, rssResponse] = await Promise.allSettled([
-      fetchWithTimeout(`${serverUrl}/youtube/videos?type=channels&maxResults=${POST_LIMITS.YOUTUBE}&page=1&limit=${POST_LIMITS.YOUTUBE}`, { cache: 'no-store' }),
-      fetchWithTimeout(`${serverUrl}/facebook/posts?maxPosts=${POST_LIMITS.FACEBOOK}&page=1&limit=${POST_LIMITS.FACEBOOK}`, { cache: 'no-store' }),
-      fetchWithTimeout(`${serverUrl}/news/bangladesh?page=1&limit=${POST_LIMITS.RSS}`, { cache: 'no-store' }),
+      fetchWithTimeout(`${serverUrl}/youtube/videos?type=channels&maxResults=${POST_LIMITS.YOUTUBE}&page=1&limit=${POST_LIMITS.YOUTUBE}`, { next: { revalidate } }),
+      fetchWithTimeout(`${serverUrl}/facebook/posts?maxPosts=${POST_LIMITS.FACEBOOK}&page=1&limit=${POST_LIMITS.FACEBOOK}`, { next: { revalidate } }),
+      fetchWithTimeout(`${serverUrl}/news/bangladesh?page=1&limit=${POST_LIMITS.RSS}`, { next: { revalidate } }),
     ]);
     
     console.log('🏗️ [BUILD] API responses received:');
