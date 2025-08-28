@@ -58,12 +58,14 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
             </div>
             {imageUrl && (
               <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gray-100 dark:bg-gray-700 rounded-[12px] overflow-hidden">
-                <Image
+                <img
                   src={imageUrl}
                   alt={title}
-                  fill
-                  style={{ objectFit: "cover" }}
-                  sizes="(max-width: 640px) 100vw, 200px"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
                 />
               </div>
             )}
