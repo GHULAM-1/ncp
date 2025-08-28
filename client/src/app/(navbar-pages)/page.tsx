@@ -7,9 +7,9 @@ export const revalidate = 9000;
 
 // Post limits for each platform
 const POST_LIMITS = {
-  RSS: 30,
-  YOUTUBE: 20,
-  FACEBOOK: 20
+  RSS: 30,       // matches RSS page
+  YOUTUBE: 20,   // matches YouTube page initial load
+  FACEBOOK: 15   // matches Facebook page initial load
 } as const;
 
 // Global configurable timeout (default 55s to stay under Vercel's 60s limit)
@@ -27,7 +27,7 @@ async function fetchWithTimeout(resource: string, options: RequestInit = {}, tim
   }
 }
 
-// Fetch data from each API directly
+// Fetch data from each API directly, cache for 2 hours, then combine and return
 async function getUnifiedFeed() {
   console.log('🏗️ [BUILD] getUnifiedFeed function started');
   console.log('🏗️ [BUILD] Server URL:', process.env.NEXT_PUBLIC_API_URL);
@@ -143,58 +143,43 @@ async function getUnifiedFeed() {
       return dateB.getTime() - dateA.getTime();
     });
 
-    // Return success even if some APIs failed, as long as we have some data
-    const hasData = allItems.length > 0;
     return {
-      success: hasData,
+      success: allItems.length > 0,
       items: allItems,
-      sources: {
-        youtube: allItems.filter(item => item.platform === 'youtube').length,
-        facebook: allItems.filter(item => item.platform === 'facebook').length,
-        rss: allItems.filter(item => item.platform === 'rss').length,
-        total: allItems.length
-      },
       lastUpdated: new Date().toISOString(),
-      errors: {
-        youtube: !(youtubeResponse.status === 'fulfilled' && youtubeResponse.value.ok) ? 'Failed to fetch' : null,
-        facebook: !(facebookResponse.status === 'fulfilled' && facebookResponse.value.ok) ? 'Failed to fetch' : null,
-        rss: !(rssResponse.status === 'fulfilled' && rssResponse.value.ok) ? 'Failed to fetch' : null
-      }
     };
 
   } catch (error) {
     console.error('Error in unified feed function:', error);
-    // Even if there's a critical error, try to return any data we might have
     return {
       success: false,
       items: [],
-      sources: { youtube: 0, facebook: 0, rss: 0, total: 0 },
       lastUpdated: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }
 
 export default async function Page() {
+  // Wait for the three routes to resolve (cached for 2 hours), then render
   const feedData = await getUnifiedFeed();
   
   // Transform data to match NewsCardProps format
-  const newsItems: NewsCardProps[] = feedData.items?.map((item: any, index: number) => ({
+  const newsItems: NewsCardProps[] = (feedData.items || []).map((item: any, index: number) => ({
     title: item.title,
     description: item.description,
     link: item.link,
     imageUrl: item.image,
     timeAgo: item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : undefined,
-    author: item.author,
+    author: item.source || item.author,
     date: item.date,
-    source: item.source,
+    source: item.source || '',
     platform: item.platform,
     type: item.type,
     profilePicture: item.profilePicture,
     engagement: item.engagement,
     slug: `${item.platform}-${index}`,
     id: item.id
-  })) || [];
+  }));
 
   return (
     <main className="max-w-[840px] mx-auto">      
