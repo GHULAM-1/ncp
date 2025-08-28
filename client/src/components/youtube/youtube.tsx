@@ -146,7 +146,6 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
     );
   }, [loading, tabLoading, videos.length, displayed.length]);
 
-  // Function to load more videos for infinite scroll
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
 
