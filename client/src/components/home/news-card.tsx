@@ -71,7 +71,6 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
             )}
           </div>
         </a>
-
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
           <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
             <span>{timeAgo}</span>
