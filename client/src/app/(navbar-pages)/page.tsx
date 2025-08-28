@@ -12,6 +12,21 @@ const POST_LIMITS = {
   FACEBOOK: 20
 } as const;
 
+// Global configurable timeout (default 55s to stay under Vercel's 60s limit)
+const REQUEST_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_REQUEST_TIMEOUT_MS || 55000);
+
+// Simple fetch with timeout to avoid long hangs during build/ISR
+async function fetchWithTimeout(resource: string, options: RequestInit = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(resource, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 // Fetch data from each API directly
 async function getUnifiedFeed() {
   console.log('🏗️ [BUILD] getUnifiedFeed function started');
@@ -19,24 +34,26 @@ async function getUnifiedFeed() {
   
   try {
     const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-    console.log('🏗️ [BUILD] Starting sequential API calls to:', serverUrl);
+    console.log('🏗️ [BUILD] Starting API calls to:', serverUrl);
     
-    // Sequential calls to avoid overwhelming the server (deployment-friendly)
-    const youtubeResponse = await fetch(`${serverUrl}/youtube/videos?type=channels&maxResults=${POST_LIMITS.YOUTUBE}&page=1&limit=${POST_LIMITS.YOUTUBE}`);
-    const facebookResponse = await fetch(`${serverUrl}/facebook/posts?maxPosts=${POST_LIMITS.FACEBOOK}&page=1&limit=${POST_LIMITS.FACEBOOK}`);
-    const rssResponse = await fetch(`${serverUrl}/news/bangladesh?page=1&limit=${POST_LIMITS.RSS}`);
+    // Run calls in parallel with timeouts so build never hangs >60s
+    const [youtubeResponse, facebookResponse, rssResponse] = await Promise.allSettled([
+      fetchWithTimeout(`${serverUrl}/youtube/videos?type=channels&maxResults=${POST_LIMITS.YOUTUBE}&page=1&limit=${POST_LIMITS.YOUTUBE}`, { cache: 'no-store' }),
+      fetchWithTimeout(`${serverUrl}/facebook/posts?maxPosts=${POST_LIMITS.FACEBOOK}&page=1&limit=${POST_LIMITS.FACEBOOK}`, { cache: 'no-store' }),
+      fetchWithTimeout(`${serverUrl}/news/bangladesh?page=1&limit=${POST_LIMITS.RSS}`, { cache: 'no-store' }),
+    ]);
     
     console.log('🏗️ [BUILD] API responses received:');
-    console.log('🏗️ [BUILD] YouTube:', youtubeResponse.ok ? 'success' : 'failed');
-    console.log('🏗️ [BUILD] Facebook:', facebookResponse.ok ? 'success' : 'failed');
-    console.log('🏗️ [BUILD] RSS:', rssResponse.ok ? 'success' : 'failed');
+    console.log('🏗️ [BUILD] YouTube:', youtubeResponse.status === 'fulfilled' && youtubeResponse.value.ok ? 'success' : 'failed');
+    console.log('🏗️ [BUILD] Facebook:', facebookResponse.status === 'fulfilled' && facebookResponse.value.ok ? 'success' : 'failed');
+    console.log('🏗️ [BUILD] RSS:', rssResponse.status === 'fulfilled' && rssResponse.value.ok ? 'success' : 'failed');
 
-    const allItems = [];
+    const allItems: any[] = [];
     
     // Process YouTube data
-    if (youtubeResponse.ok) {
+    if (youtubeResponse.status === 'fulfilled' && youtubeResponse.value.ok) {
       try {
-        const data = await youtubeResponse.json();
+        const data = await youtubeResponse.value.json();
         if (data.success && data.videos) {
           const youtubeItems = data.videos.map((video: any, index: number) => ({
             id: `yt_${video.videoId || index}`,
@@ -62,9 +79,9 @@ async function getUnifiedFeed() {
     }
 
     // Process Facebook data
-    if (facebookResponse.ok) {
+    if (facebookResponse.status === 'fulfilled' && facebookResponse.value.ok) {
       try {
-        const data = await facebookResponse.json();
+        const data = await facebookResponse.value.json();
         if (data.success && data.posts) {
           const facebookItems = data.posts.map((post: any, index: number) => ({
             id: `fb_${post.postId || index}`,
@@ -92,9 +109,9 @@ async function getUnifiedFeed() {
     }
 
     // Process RSS data
-    if (rssResponse.ok) {
+    if (rssResponse.status === 'fulfilled' && rssResponse.value.ok) {
       try {
-        const data = await rssResponse.json();
+        const data = await rssResponse.value.json();
         if (data.success && data.news) {
           const rssItems = data.news.map((item: any, index: number) => ({
             id: `rss_${index}`,
@@ -139,9 +156,9 @@ async function getUnifiedFeed() {
       },
       lastUpdated: new Date().toISOString(),
       errors: {
-        youtube: !youtubeResponse.ok ? 'Failed to fetch' : null,
-        facebook: !facebookResponse.ok ? 'Failed to fetch' : null,
-        rss: !rssResponse.ok ? 'Failed to fetch' : null
+        youtube: !(youtubeResponse.status === 'fulfilled' && youtubeResponse.value.ok) ? 'Failed to fetch' : null,
+        facebook: !(facebookResponse.status === 'fulfilled' && facebookResponse.value.ok) ? 'Failed to fetch' : null,
+        rss: !(rssResponse.status === 'fulfilled' && rssResponse.value.ok) ? 'Failed to fetch' : null
       }
     };
 
