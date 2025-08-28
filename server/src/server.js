@@ -80,6 +80,7 @@ app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/youtube", require("./routes/youtube.routes"));
 app.use("/api/news", require("./routes/news.routes"));
 app.use("/api/facebook", require("./routes/facebook.routes"));
+app.use("/api/comments", require("./routes/comment.routes"));
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the Authentication API" });

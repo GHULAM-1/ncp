@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const { validationResult } = require("express-validator");
 const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
 
 exports.uploadAvatar = async (req, res) => {
   try {
@@ -11,7 +12,16 @@ exports.uploadAvatar = async (req, res) => {
     }
 
     const result = await cloudinary.uploader.upload_stream(
-      { folder: "avatars", resource_type: "image" },
+      { 
+        folder: "avatars", 
+        resource_type: "image",
+        width: 400,
+        height: 400,
+        crop: "fill",
+        gravity: "face", // Automatically detect and center on face if possible
+        quality: "auto",
+        format: "auto"
+      },
       async (error, result) => {
         if (error) {
           console.error(error);
@@ -30,7 +40,6 @@ exports.uploadAvatar = async (req, res) => {
       }
     );
 
-    streamifier = require("streamifier");
     streamifier.createReadStream(req.file.buffer).pipe(result);
   } catch (err) {
     console.error(err);
@@ -62,7 +71,7 @@ exports.getUser = async (req, res, next) => {
 };
 exports.getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user._id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.json(user);
