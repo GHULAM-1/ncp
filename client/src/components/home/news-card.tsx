@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { NewsCardProps } from "@/types/news-card-type";
 import Image from "next/image";
-import DisqusComments from "../config/disqus-comments";
+import CustomComments from "../config/custom-comments";
 import ShareButton from "./share-button";
 import { Send, MessageSquare } from "lucide-react";
 
 interface NewsCardPropsWithCommentControl extends NewsCardProps {
   openCommentId: string | null;
   onCommentToggle: (id: string) => void;
+  postSlug?: string;
 }
 
 const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
@@ -20,25 +21,22 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
   link,
   openCommentId,
   onCommentToggle,
+  postSlug,
 }) => {
-  const post = { slug: link, title };
-  const isCommentsOpen = openCommentId === link;
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          text: title,
-          url: link,
-        });
-      } catch (error) {
-        console.error("Sharing failed:", error);
-      }
-    } else {
-      alert("Sharing is not supported on this browser.");
+  // Create a consistent post slug from the link
+  const createPostSlug = (url: string) => {
+    try {
+      // Extract domain and path, or use a hash of the URL
+      const urlObj = new URL(url);
+      return `${urlObj.hostname}${urlObj.pathname}`.replace(/[^a-zA-Z0-9]/g, '_');
+    } catch {
+      // Fallback: create a hash from the URL
+      return btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
     }
   };
+
+  const post = { slug: postSlug || createPostSlug(link), title };
+  const isCommentsOpen = openCommentId === postSlug || openCommentId === link;
 
   return (
     <div className="bg-white dark:bg-[#1f2125] px-4">
@@ -87,8 +85,8 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
             <div className="hidden md:flex items-center gap-2">
               <ShareButton url={link} title={title} />
               <button
-                onClick={() => onCommentToggle(link)}
-                className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                onClick={() => onCommentToggle(postSlug || link)}
+                className="px-3 hover:cursor-pointer py-2 text-sm rounded transition border border-gray-300 dark:border-gray-600 text-black hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
               >
                 {isCommentsOpen ? "Close Comments" : "Show Comments"}
               </button>
@@ -98,7 +96,7 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
               <ShareButton url={link} title={title} />
 
               <button
-                onClick={() => onCommentToggle(link)}
+                onClick={() => onCommentToggle(postSlug || link)}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
                 title="Comments"
               >
@@ -112,8 +110,8 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
         </div>
 
         {isCommentsOpen && (
-          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-            <DisqusComments post={post} key={post.slug} />
+          <div className="mt-4 border-t  dark:border-gray-700 pt-4">
+            <CustomComments post={post} postType="news" key={post.slug} />
           </div>
         )}
       </div>

@@ -9,6 +9,8 @@ export interface YouTubeVideo {
   description: string;
   channelTitle: string;
   source: string;
+  channelHandle?: string;
+  isShort?: boolean;
 }
 
 export interface YouTubeResponse {
@@ -21,12 +23,13 @@ export interface YouTubeResponse {
   hasMore: boolean;
   sources: {
     youtube: number;
-    googleAlerts: number;
+    playlists: number; // Changed from googleAlerts to playlists
     total: number;
   };
   config: {
-    searchQuery: string;
+    searchQuery: string | null; // Made nullable to match backend
     channelsCount: number;
+    playlistsCount: number; // Added to match backend
     maxResults: number;
   };
 }
@@ -35,11 +38,13 @@ export interface YouTubeResponse {
 export type ContentType = 'channels' | 'talkshows' | 'youtube';
 
 // Fetch videos by content type
-export const fetchVideosByType = async (type: ContentType, page: number = 1, limit: number = 15): Promise<YouTubeResponse> => {
+export const fetchVideosByType = async (type: ContentType, page: number = 1, maxResults: number = 15): Promise<YouTubeResponse> => {
   try {
     const params = new URLSearchParams({ type });
     params.append('page', page.toString());
-    params.append('limit', limit.toString());
+    params.append('maxResults', maxResults.toString()); // Changed from 'limit' to 'maxResults'
+    
+    console.log(`🌐 API Call: ${API_BASE_URL}/youtube/videos?${params}`);
     
     const response = await fetch(`${API_BASE_URL}/youtube/videos?${params}`);
     
@@ -48,6 +53,7 @@ export const fetchVideosByType = async (type: ContentType, page: number = 1, lim
     }
     
     const data = await response.json();
+    console.log(`📡 API Response:`, data);
     return data;
   } catch (error) {
     console.error(`Error fetching ${type} videos:`, error);
@@ -67,5 +73,9 @@ export const fetchChannelVideos = async (maxResults?: number) =>
 export const fetchTalkShowVideos = async (maxResults?: number) => 
   fetchVideosByType('talkshows', maxResults);
 
+export const fetchYouTubeShorts = async (maxResults?: number) => 
+  fetchVideosByType('youtube', maxResults);
+
+// Legacy function for backward compatibility
 export const fetchYouTubeChannelVideos = async (maxResults?: number) => 
   fetchVideosByType('youtube', maxResults); 

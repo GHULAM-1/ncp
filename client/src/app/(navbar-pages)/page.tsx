@@ -1,21 +1,30 @@
 import NewsFeed from "@/components/home/news-feed";
 import { NewsCardProps } from "@/types/news-card-type";
+import { formatDistanceToNow } from 'date-fns';
 
 // ISR Configuration - revalidate every 2.5 hours (9000 seconds)
 export const revalidate = 9000;
+
+// Post limits for each platform
+const POST_LIMITS = {
+  RSS: 30,
+  YOUTUBE: 20,
+  FACEBOOK: 20
+} as const;
+
 // Fetch data from each API directly
 async function getUnifiedFeed() {
   console.log('🏗️ [BUILD] getUnifiedFeed function started');
   console.log('🏗️ [BUILD] Server URL:', process.env.NEXT_PUBLIC_API_URL);
   
   try {
-    const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
     console.log('🏗️ [BUILD] Starting sequential API calls to:', serverUrl);
     
     // Sequential calls to avoid overwhelming the server (deployment-friendly)
-    const youtubeResponse = await fetch(`${serverUrl}/youtube/videos?type=channels&maxResults=20&page=1&limit=20`);
-    const facebookResponse = await fetch(`${serverUrl}/facebook/posts?maxPosts=20&page=1&limit=20`);
-    const rssResponse = await fetch(`${serverUrl}/news/bangladesh?page=1&limit=20`);
+    const youtubeResponse = await fetch(`${serverUrl}/youtube/videos?type=channels&maxResults=${POST_LIMITS.YOUTUBE}&page=1&limit=${POST_LIMITS.YOUTUBE}`);
+    const facebookResponse = await fetch(`${serverUrl}/facebook/posts?maxPosts=${POST_LIMITS.FACEBOOK}&page=1&limit=${POST_LIMITS.FACEBOOK}`);
+    const rssResponse = await fetch(`${serverUrl}/news/bangladesh?page=1&limit=${POST_LIMITS.RSS}`);
     
     console.log('🏗️ [BUILD] API responses received:');
     console.log('🏗️ [BUILD] YouTube:', youtubeResponse.ok ? 'success' : 'failed');
@@ -157,7 +166,9 @@ export default async function Page() {
     title: item.title,
     description: item.description,
     link: item.link,
-    image: item.image,
+    imageUrl: item.image,
+    timeAgo: item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : undefined,
+    author: item.author,
     date: item.date,
     source: item.source,
     platform: item.platform,
@@ -169,39 +180,7 @@ export default async function Page() {
   })) || [];
 
   return (
-    <main className="max-w-[840px] mx-auto">
-      {/* Feed Header with Source Stats */}
-      {feedData.success && (
-        <div className="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-            Unified News Feed
-          </h1>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-              <span>YouTube: {feedData.sources?.youtube || 0}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-              <span>Facebook: {feedData.sources?.facebook || 0}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-              <span>RSS: {feedData.sources?.rss || 0}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
-              <span>Total: {feedData.sources?.total || 0}</span>
-            </div>
-          </div>
-          {feedData.lastUpdated && (
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-              Last updated: {new Date(feedData.lastUpdated).toLocaleString()}
-            </p>
-          )}
-        </div>
-      )}
-      
+    <main className="max-w-[840px] mx-auto">      
       <NewsFeed newsItems={newsItems} />
     </main>
   );

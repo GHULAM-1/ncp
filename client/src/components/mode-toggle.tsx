@@ -24,7 +24,7 @@ export function ModeToggle() {
       </span>
       <button
         onClick={() => setTheme(isDark ? "light" : "dark")}
-        className={`relative w-14 h-7 rounded-full px-1 flex items-center transition-colors duration-300 ${
+        className={`relative hover:cursor-pointer w-14 h-7 rounded-full px-1 flex items-center transition-colors duration-300 ${
           isDark ? "bg-gray-700" : "bg-yellow-300"
         }`}
       >

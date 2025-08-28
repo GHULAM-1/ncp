@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { API_URL } from "@/api/auth/api";
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -22,7 +23,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5001/users/me", {
+        const res = await fetch(`${API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load profile");
@@ -55,7 +56,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       const formData = new FormData();
       formData.append("avatar", file);
 
-      const res = await fetch("http://localhost:5001/api/users/upload-avatar", {
+      const res = await fetch(`${API_URL}/users/upload-avatar`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -74,6 +75,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveChanges = async () => {
+    // If there's a preview, upload the image first
+    if (profilePreview) {
+      const fileInput = fileInputRef.current;
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        await handleImageChange({ target: { files: fileInput.files } } as React.ChangeEvent<HTMLInputElement>);
+      }
+    }
+    onClose();
   };
 
   const avatarSrc =
@@ -107,8 +119,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 alt="Profile Avatar"
                 width={96}
                 height={96}
-                className="object-cover rounded-full"
+                className="object-cover w-full h-full rounded-full"
                 priority
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                  // Show fallback initials
+                  const fallback = document.createElement("div");
+                  fallback.className = "w-full h-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold";
+                  fallback.textContent = username ? username[0].toUpperCase() : "?";
+                  target.parentNode?.appendChild(fallback);
+                }}
               />
             </div>
             <button

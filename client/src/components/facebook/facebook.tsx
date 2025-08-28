@@ -18,7 +18,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import DisqusComments from "../config/disqus-comments";
+import CustomComments from "../config/custom-comments";
 import ShareButton from "../home/share-button";
 
 interface FacebookNewsProps {
@@ -212,7 +212,7 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
                   <ShareButton url={post.url} title={post.title} />
                   <button
                     onClick={() => onCommentToggle(post.postId)}
-                    className="px-3 py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                    className="px-3 hover:cursor-pointer py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                   >
                     {openCommentId === post.postId ? "Close Comments" : "Show Comments"}
                   </button>
@@ -238,8 +238,9 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
             {/* Comments section */}
             {openCommentId === post.postId && (
               <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
-                <DisqusComments 
-                  post={{ slug: post.url, title: post.title }} 
+                <CustomComments 
+                  post={{ slug: `facebook_${post.postId}`, title: post.title }} 
+                  postType="facebook"
                   key={post.postId} 
                 />
               </div>

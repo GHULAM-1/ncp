@@ -16,17 +16,24 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import DisqusComments from "../config/disqus-comments";
+import CustomComments from "../config/custom-comments";
 import ShareButton from "../home/share-button";
-import { mockYouTubeVideos } from "@/data/mock-youtube-data";
+import Loader from "../loader";
 
-export default function YouTubeNews() {
-  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+interface YouTubeNewsProps {
+  initialData: {
+    channels: { videos: YouTubeVideo[]; hasMore: boolean; success: boolean };
+    talkshows: { videos: YouTubeVideo[]; hasMore: boolean; success: boolean };
+    youtube: { videos: YouTubeVideo[]; hasMore: boolean; success: boolean };
+  };
+}
+
+export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
+  const [videos, setVideos] = useState<YouTubeVideo[]>(initialData.channels.videos || []);
+  const [loading, setLoading] = useState(false); // Start with false since we have initial data
+  const [tabLoading, setTabLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ContentType>("channels");
-  const [lastUpdated, setLastUpdated] = useState<string>("");
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
 
@@ -34,9 +41,19 @@ export default function YouTubeNews() {
     setOpenCommentId(openCommentId === id ? null : id);
   };
 
+  // API Quota Management - Adjust these for free API limits also see line 140
+  const API_QUOTA_LIMITS = {
+    // Free API: Reduce these numbers to save quota
+    INITIAL_LOAD_SIZE: 20, // Reduced from 20 to 10 for free API
+    PAGE_SIZE: 10, // Reduced from 10 to 5 for free API
+    MAX_TOTAL_VIDEOS: 50, // Maximum total videos to load across all pages
+    SEARCH_QUERIES_PER_CHANNEL: 4, // Reduce search queries per channel (was 4)
+    DELAY_BETWEEN_REQUESTS: 100, // Increase delay between API calls (was 100ms)
+  } as const;
+
   // Infinite scroll states
-  const PAGE_SIZE = 10; // Increased from 5 to 10
-  const INITIAL_LOAD_SIZE = 20; // Load more videos initially
+  const PAGE_SIZE = API_QUOTA_LIMITS.PAGE_SIZE;
+  const INITIAL_LOAD_SIZE = API_QUOTA_LIMITS.INITIAL_LOAD_SIZE;
   const [displayed, setDisplayed] = useState<YouTubeVideo[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -46,67 +63,101 @@ export default function YouTubeNews() {
   const contentTypes: { type: ContentType; label: string; icon: string }[] = [
     { type: "channels", label: "News Channels", icon: "📺" },
     { type: "talkshows", label: "Talk Shows", icon: "🎤" },
-    { type: "youtube", label: "YouTube Channels", icon: "📱" },
+    { type: "youtube", label: "YouTube Shorts", icon: "📱" },
   ];
 
   // Function to load videos by type
-  const loadVideos = useCallback(async (type: ContentType) => {
-    try {
-      setRefreshing(true);
-      setError(null);
-      console.log(`🔄 Loading ${type} videos...`);
+  const loadVideos = useCallback(
+    async (type: ContentType) => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log(`🔄 Loading ${type} videos...`);
 
-      const response = await fetchVideosByType(type, 1, INITIAL_LOAD_SIZE);
-      
-      setVideos(response.videos);
-      setDisplayed(response.videos);
-      setHasMore(response.hasMore);
-      setLastUpdated(new Date().toISOString());
-      page.current = 1;
+        const response = await fetchVideosByType(type, 1, INITIAL_LOAD_SIZE);
 
-      console.log(
-        `✅ ${type} videos loaded! Found ${response.videos.length} videos. Has more: ${response.hasMore}`
-      );
-    } catch (err) {
-      console.error(`Error loading ${type} videos:`, err);
-      // Fallback to mock data if API fails
-      console.log("🔄 Falling back to mock data...");
-      let mockVideos: YouTubeVideo[] = [];
-      switch (type) {
-        case "channels":
-          mockVideos = mockYouTubeVideos.slice(0, INITIAL_LOAD_SIZE);
-          break;
-        case "talkshows":
-          mockVideos = mockYouTubeVideos.slice(5, 5 + INITIAL_LOAD_SIZE);
-          break;
-        case "youtube":
-          mockVideos = mockYouTubeVideos.slice(10, 10 + INITIAL_LOAD_SIZE);
-          break;
-        default:
-          mockVideos = mockYouTubeVideos;
+        setVideos(response.videos);
+        setDisplayed(response.videos);
+        setHasMore(response.hasMore);
+        page.current = 1;
+
+        console.log(
+          `✅ ${type} videos loaded! Found ${response.videos.length} videos. Has more: ${response.hasMore}`
+        );
+      } catch (err) {
+        console.error(`Error loading ${type} videos:`, err);
+
+        // Set error message for user
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load videos";
+        setError(errorMessage);
+
+        // Check if it's a network error (server not running)
+        if (err instanceof Error && err.message.includes("fetch")) {
+          setError(
+            "Server not accessible. Please check if the backend server is running."
+          );
+        }
+
+        // Reset state on error
+        setVideos([]);
+        setDisplayed([]);
+        setHasMore(false);
+        page.current = 1;
+      } finally {
+        setLoading(false);
+        setTabLoading(false);
+        console.log(
+          `📊 Loading states reset: loading=${false}, tabLoading=${false}`
+        );
       }
-      setVideos(mockVideos);
-      setDisplayed(mockVideos);
-      setHasMore(false);
-      setLastUpdated(new Date().toISOString());
-      page.current = 1;
-      console.log(
-        `✅ Mock data loaded for ${type}: ${mockVideos.length} videos`
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    [INITIAL_LOAD_SIZE]
+  );
 
   // Load videos when tab changes
   useEffect(() => {
-    loadVideos(activeTab);
-  }, [activeTab, loadVideos]);
+    // Use initial data from ISR for the default tab (channels)
+    if (activeTab === "channels" && initialData.channels.videos.length > 0) {
+      setVideos(initialData.channels.videos);
+      setDisplayed(initialData.channels.videos);
+      setHasMore(initialData.channels.hasMore);
+      setTabLoading(false);
+    } else if (activeTab === "talkshows" && initialData.talkshows.videos.length > 0) {
+      setVideos(initialData.talkshows.videos);
+      setDisplayed(initialData.talkshows.videos);
+      setHasMore(initialData.talkshows.hasMore);
+      setTabLoading(false);
+    } else if (activeTab === "youtube" && initialData.youtube.videos.length > 0) {
+      setVideos(initialData.youtube.videos);
+      setDisplayed(initialData.youtube.videos);
+      setHasMore(initialData.youtube.hasMore);
+      setTabLoading(false);
+    } else {
+      // Only call API if no initial data available
+      loadVideos(activeTab);
+    }
+  }, [activeTab, loadVideos, initialData]);
+
+  // Debug: Monitor loading states
+  useEffect(() => {
+    console.log(
+      `🔍 State change - loading: ${loading}, tabLoading: ${tabLoading}, videos: ${videos.length}, displayed: ${displayed.length}`
+    );
+  }, [loading, tabLoading, videos.length, displayed.length]);
 
   // Function to load more videos for infinite scroll
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
+
+    // Check if we've reached the maximum total videos limit
+    if (displayed.length >= API_QUOTA_LIMITS.MAX_TOTAL_VIDEOS) {
+      console.log(
+        `🚫 Reached maximum videos limit: ${API_QUOTA_LIMITS.MAX_TOTAL_VIDEOS}`
+      );
+      setHasMore(false);
+      return;
+    }
 
     setLoadingMore(true);
     try {
@@ -154,7 +205,43 @@ export default function YouTubeNews() {
   const handleTabClick = (type: ContentType) => {
     if (type !== activeTab) {
       setActiveTab(type);
-      // No need to show loading since we're using mock data
+      setError(null);
+      
+      // Use initial data from ISR if available
+      let initialVideos: YouTubeVideo[] = [];
+      let initialHasMore = false;
+      
+      switch (type) {
+        case "channels":
+          initialVideos = initialData.channels.videos || [];
+          initialHasMore = initialData.channels.hasMore || false;
+          break;
+        case "talkshows":
+          initialVideos = initialData.talkshows.videos || [];
+          initialHasMore = initialData.talkshows.hasMore || false;
+          break;
+        case "youtube":
+          initialVideos = initialData.youtube.videos || [];
+          initialHasMore = initialData.youtube.hasMore || false;
+          break;
+      }
+      
+      if (initialVideos.length > 0) {
+        // Use initial data from ISR
+        setVideos(initialVideos);
+        setDisplayed(initialVideos);
+        setHasMore(initialHasMore);
+        setTabLoading(false);
+      } else {
+        // Show loading and fetch from API if no initial data
+        setTabLoading(true);
+        setDisplayed([]);
+        setVideos([]);
+        setHasMore(true);
+        loadVideos(type);
+      }
+      
+      page.current = 1;
     }
   };
 
@@ -210,11 +297,12 @@ export default function YouTubeNews() {
               <button
                 key={type}
                 onClick={() => handleTabClick(type)}
+                disabled={tabLoading}
                 className={` text-[14px] hover:cursor-pointer px-4 py-1 font-[500] rounded-[8px] transition-all duration-200 ${
                   activeTab === type
                     ? "dark:bg-[#004a77] bg-[#c2e7ff] dark:text-[#c2e7ff] text-[#001d35]"
                     : "bg-transparent hover:bg-[#3a3b3e] dark:text-[#c2c7c5] text-[#444746] border-[1px] border-[#5e5e5e] "
-                }`}
+                } ${tabLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {label}
               </button>
@@ -223,8 +311,17 @@ export default function YouTubeNews() {
         </div>
       </div>
 
+      {/* Tab Loading Indicator */}
+      {tabLoading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+          </div>
+        </div>
+      )}
+
       <div className="space-y-0 rounded-2xl  overflow-hidden">
-        {loading ? (
+        {loading && !tabLoading && (!initialData.channels.videos.length && !initialData.talkshows.videos.length && !initialData.youtube.videos.length) ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -251,28 +348,18 @@ export default function YouTubeNews() {
             {displayed.map((video, index) => (
               <div
                 key={`${video.videoId}-${index}`}
-                className="bg-white  dark:bg-[#1f2125] px-4 cursor-pointer"
+                className="bg-white dark:bg-[#1f2125] px-4 cursor-pointer"
                 onClick={() => handleCardClick(video)}
               >
                 <div className="border-b border-gray-200 dark:border-gray-700 py-4">
-                  <div className="flex flex-col sm:flex-row">
-                    <div className="flex-1 pr-0 sm:pr-4 sm:mb-0">
-                      <span className="text-xs sm:text-sm font-[400] text-gray-700 dark:text-gray-100">
-                        {video.source}
-                      </span>
-                      <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-gray-900 dark:text-gray-100">
-                        {video.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mt-2">
-                        {video.description}
-                      </p>
-                    </div>
+                  {/* Big Image on Top */}
+                  <div className="mb-6">
                     {video.thumbnail ? (
-                      <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gray-100 dark:bg-gray-700 rounded-[12px] overflow-hidden">
+                      <div className="relative w-full h-72 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
                         <img
                           src={video.thumbnail}
                           alt={video.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = "none";
@@ -284,89 +371,108 @@ export default function YouTubeNews() {
                         {/* Fallback placeholder */}
                         <div className="hidden absolute inset-0 bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
                           <div className="text-center text-white">
-                            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
-                              <Play className="h-6 w-6" />
+                            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-3">
+                              <Play className="h-8 w-8" />
                             </div>
-                            <p className="text-sm font-medium">
+                            <p className="text-lg font-medium">
                               {video.channelTitle}
                             </p>
                           </div>
                         </div>
                         {/* Play button overlay */}
                         <div className="absolute inset-0 bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                          <div className="w-12 h-12 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
-                            <Play className="h-6 w-6 text-black" />
+                          <div className="w-20 h-20 bg-white bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                            <Play className="h-10 w-10 text-black" />
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="relative w-full sm:w-[200px] h-40 sm:h-28 bg-gradient-to-br from-red-500 to-red-600 rounded-[12px] flex items-center justify-center">
+                      <div className="relative w-full h-64 bg-gradient-to-br from-red-500 to-red-600 rounded-[16px] flex items-center justify-center group cursor-pointer hover:shadow-xl transition-all duration-300">
                         <div className="text-center text-white">
-                          <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
-                            <Play className="h-6 w-6" />
+                          <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-3">
+                            <Play className="h-8 w-8" />
                           </div>
-                          <p className="text-sm font-medium">
+                          <p className="text-lg font-medium">
                             {video.channelTitle}
                           </p>
                         </div>
+
                       </div>
                     )}
                   </div>
 
-                  {/* Action buttons and comments */}
-                  <div className="flex items-center justify-between mt-5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          {video.publishedAt
-                            ? formatDistanceToNow(new Date(video.publishedAt), {
-                                addSuffix: true,
-                              })
-                            : "Unknown date"}
-                        </span>
-                        <span className="hidden md:inline">•</span>
-                        <User className="h-3 w-3" />
-                        <span>{video.channelTitle}</span>
-                      </div>
-                    </div>
+                  {/* Content Layout: Text on Left, Buttons on Right */}
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                    {/* Left Side - Text Content */}
+                    <div className="flex-1">
+                      <span className="inline-block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full mb-4">
+                          <>
+                            <span className="block sm:hidden ">
+                                {video.source.length > 8 ? video.source.substring(0, 24) + '...' : video.source}
+                              </span>
+                            <span className="hidden sm:block">
+                              {video.source}
+                            </span>
+                          </>
 
-                    <div className="flex items-center gap-2">
-                      <div className="hidden md:flex items-center gap-2">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <ShareButton url={video.url} title={video.title} />
+                      </span>
+                      <h3 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400">
+                        {video.title}
+                      </h3>
+
+                      {/* Commented out description as requested */}
+                      {/* <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mt-2">
+                        {video.description}
+                      </p> */}
+
+                      {/* Metadata */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 mt-6 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex flex-row gap-2">
+                          <div className="flex items-center gap-2 rounded bg-gray-50 dark:bg-gray-800 px-3 py-2 ">
+                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm sm:font-medium">
+                              {video.publishedAt
+                                ? formatDistanceToNow(
+                                    new Date(video.publishedAt),
+                                    {
+                                      addSuffix: true,
+                                    }
+                                  )
+                                : "Unknown date"}
+                            </span>
+                          </div>
+                          <div className="flex items-center rounded gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 ">
+                            <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm font-medium">
+                              {video.channelTitle}
+                            </span>
+                          </div>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCommentToggle(video.videoId);
-                          }}
-                          className="px-3 py-2 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-                        >
-                          {openCommentId === video.videoId
-                            ? "Close Comments"
-                            : "Show Comments"}
-                        </button>
-                      </div>
-
-                      <div className="flex md:hidden items-center gap-2">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <ShareButton url={video.url} title={video.title} />
+                        {/* Right Side - Action Buttons */}
+                        <div className="flex flex-row  gap-3 lg:flex-shrink-0 ">
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className=""
+                          >
+                            <ShareButton url={video.url} title={video.title} />
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCommentToggle(video.videoId);
+                            }}
+                            className="flex-1 lg:flex-none md:px-6 text-sm font-medium rounded transition-all duration-200 md:border border-gray-300 text-black hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 hover:shadow-md active:scale-95"
+                          >
+                            <span className="block md:hidden">
+                              <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                            </span>
+                            <span className="hidden md:block">
+                              {openCommentId === video.videoId
+                                ? "Close Comments"
+                                : "Show Comments"}
+                            </span>
+                          </button>
                         </div>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCommentToggle(video.videoId);
-                          }}
-                          className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                          title="Comments"
-                        >
-                          <MessageSquare
-                            size={16}
-                            className="text-gray-600 dark:text-gray-300"
-                          />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -375,8 +481,12 @@ export default function YouTubeNews() {
                 {/* Comments section */}
                 {openCommentId === video.videoId && (
                   <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
-                    <DisqusComments
-                      post={{ slug: video.url, title: video.title }}
+                    <CustomComments
+                      post={{
+                        slug: `youtube_${video.videoId}`,
+                        title: video.title,
+                      }}
+                      postType="youtube"
                       key={video.videoId}
                     />
                   </div>
@@ -386,22 +496,30 @@ export default function YouTubeNews() {
           </>
         )}
 
-        {/* No infinite scroll needed for mock data */}
-        {/* {hasMore && displayed.length > 0 && (
+        {/* Infinite scroll loader */}
+        {hasMore && displayed.length > 0 && (
           <div
             ref={loaderRef}
             className="flex justify-center py-8 text-gray-700 dark:text-gray-300"
           >
-            {loadingMore && <Loader />}
+            {loadingMore && (
+              <div className="flex items-center gap-2">
+                <Loader />
+              </div>
+            )}
           </div>
-        )} */}
+        )}
       </div>
 
-      {videos.length === 0 && !loading && !error && (
+      {/* No videos found message - only show when not loading and no videos */}
+      {!loading && !tabLoading && videos.length === 0 && !error && (
         <div className="text-center py-12">
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             No videos found for{" "}
             {contentTypes.find((t) => t.type === activeTab)?.label}.
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+            Try switching to a different tab.
           </p>
         </div>
       )}

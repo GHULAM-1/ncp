@@ -60,14 +60,29 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
         For you
       </h1>
       <div className="shadow-sm rounded-2xl overflow-hidden bg-gray-50 dark:bg[#292a2d]">
-        {displayed.map((item) => (
-          <NewsCard 
-            key={item.slug} 
-            {...item} 
-            openCommentId={openCommentId}
-            onCommentToggle={handleCommentToggle}
-          />
-        ))}
+        {displayed.map((item) => {
+          // Create consistent post slug for comment identification
+          const createPostSlug = (url: string) => {
+            try {
+              const urlObj = new URL(url);
+              return `${urlObj.hostname}${urlObj.pathname}`.replace(/[^a-zA-Z0-9]/g, '_');
+            } catch {
+              return btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+            }
+          };
+          
+          const postSlug = createPostSlug(item.link);
+          
+          return (
+            <NewsCard 
+              key={item.slug} 
+              {...item} 
+              openCommentId={openCommentId}
+              onCommentToggle={handleCommentToggle}
+              postSlug={postSlug}
+            />
+          );
+        })}
       </div>
 
       <div

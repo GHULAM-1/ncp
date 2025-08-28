@@ -112,20 +112,30 @@ const Header: React.FC = () => {
           <div className="relative flex-shrink-0" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
-              className="w-8 h-8 rounded-full overflow-hidden focus:outline-none"
+              className="w-8 h-8 hover:cursor-pointer rounded-full overflow-hidden focus:outline-none"
             >
               <Image
                 src={avatarSrc}
                 alt="User Avatar"
                 width={32}
                 height={32}
-                className="object-cover rounded-full"
+                className="object-cover w-full h-full rounded-full"
                 priority
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                  // Show fallback initials
+                  const fallback = document.createElement("div");
+                  fallback.className = "w-full h-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold";
+                  fallback.textContent = username ? username[0].toUpperCase() : "?";
+                  target.parentNode?.appendChild(fallback);
+                }}
               />
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#2a2d31] border dark:border-gray-700 rounded-md shadow-lg z-50">
+              <div className="absolute right-0  mt-2 w-48 bg-white dark:bg-[#2a2d31] border dark:border-gray-700 rounded-[4px] shadow-lg z-50">
                 <div className="p-2 text-sm text-gray-800 dark:text-gray-200">
                   {token ? (
                     <>
@@ -134,13 +144,13 @@ const Header: React.FC = () => {
                           setDropdownOpen(false);
                           setIsProfileModalOpen(true);
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        className="w-full hover:cursor-pointer text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                       >
                         Edit Profile
                       </button>
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        className="w-full hover:cursor-pointer text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                       >
                         Logout
                       </button>
@@ -149,21 +159,21 @@ const Header: React.FC = () => {
                     <>
                       <Link
                         href="/login"
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        className="block hover:cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                         onClick={() => setDropdownOpen(false)}
                       >
                         Login
                       </Link>
                       <Link
                         href="/signup"
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        className="block hover:cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                         onClick={() => setDropdownOpen(false)}
                       >
                         Sign Up
                       </Link>
                     </>
                   )}
-                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                  <hr className="my-2  border-gray-200 dark:border-gray-700" />
                   <ModeToggle />
                 </div>
               </div>

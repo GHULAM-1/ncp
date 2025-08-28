@@ -1,26 +1,22 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { fetchBangladeshNews, NewsItem } from "@/api/news/api";
+import { fetchBangladeshNews, NewsItem, NewsResponse } from "@/api/news/api";
 import Loader from "../loader";
 import {
-  Loader2,
-  ExternalLink,
   Calendar,
-  Globe,
-  RefreshCw,
   MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ShareButton from "../home/share-button";
-import DisqusComments from "../config/disqus-comments";
+import CustomComments from "../config/custom-comments";
 
-export default function RSSNews() {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+interface RSSNewsProps {
+  initialNews: NewsResponse;
+}
+
+export default function RSSNews({ initialNews }: RSSNewsProps) {
+  const [news, setNews] = useState<NewsItem[]>(initialNews.news || []);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
-  const REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
   const onCommentToggle = (id: string) => {
     setOpenCommentId(openCommentId === id ? null : id);
@@ -28,36 +24,11 @@ export default function RSSNews() {
 
   // Infinite scroll states
   const PAGE_SIZE = 30; // Match server limit
-  const [displayed, setDisplayed] = useState<NewsItem[]>([]);
+  const [displayed, setDisplayed] = useState<NewsItem[]>(initialNews.news || []);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(initialNews.hasMore || false);
   const page = useRef(1);
   const loaderRef = useRef<HTMLDivElement | null>(null);
-  // Function to load news
-  const loadNews = useCallback(async () => {
-    try {
-      setRefreshing(true);
-      console.log("🔄 Refreshing RSS news...");
-
-      const response = await fetchBangladeshNews(1, PAGE_SIZE);
-      console.log(response);
-      setNews(response.news);
-      setDisplayed(response.news);
-      setHasMore(response.hasMore);
-      setLastUpdated(new Date().toISOString());
-      page.current = 1;
-
-      console.log(
-        `✅ RSS news refreshed! Found ${response.news.length} articles. Has more: ${response.hasMore}`
-      );
-    } catch (err) {
-      setError("Failed to load news");
-      console.error("Error loading news:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
 
   // Function to load more news for infinite scroll
   const loadMore = useCallback(async () => {
@@ -90,24 +61,6 @@ export default function RSSNews() {
     }
   }, [loadingMore, hasMore, displayed.length]);
 
-  // Initial load
-  useEffect(() => {
-    loadNews();
-  }, [loadNews]);
-
-  // Set up auto-refresh interval
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!loading) {
-        // Only refresh if not currently loading
-        loadNews();
-      }
-    }, REFRESH_INTERVAL);
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, [loadNews, loading, REFRESH_INTERVAL]);
-
   // Set up intersection observer for infinite scroll
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -126,22 +79,13 @@ export default function RSSNews() {
     window.open(link, "_blank");
   };
 
-  if (loading && news.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading news...</span>
-      </div>
-    );
-  }
-
-  if (error && news.length === 0) {
+  if (error && (!initialNews.news || initialNews.news.length === 0)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => loadNews()}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Retry
@@ -199,7 +143,7 @@ export default function RSSNews() {
                           e.stopPropagation();
                           onCommentToggle(item.link);
                         }}
-                        className="px-3 py-2 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                        className="px-3 hover:cursor-pointer py-2 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                       >
                         {openCommentId === item.link
                           ? "Close Comments"
@@ -233,8 +177,9 @@ export default function RSSNews() {
             {/* Comments section */}
             {openCommentId === item.link && (
               <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
-                <DisqusComments
-                  post={{ slug: item.link, title: item.title }}
+                <CustomComments
+                  post={{ slug: `rss_${btoa(item.link).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}`, title: item.title }}
+                  postType="rss"
                   key={item.link}
                 />
               </div>
@@ -253,7 +198,7 @@ export default function RSSNews() {
         </div>
       )}
 
-      {news.length === 0 && !loading && (
+      {news.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">No news articles found.</p>
         </div>
