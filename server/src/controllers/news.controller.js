@@ -15,7 +15,6 @@ const getBangladeshNews = async (req, res) => {
                 "https://news.google.com/rss/search?q=bangladesh&hl=en-US&gl=US&ceid=US:en"
             ];
         }
-        
         if (NEWS_SOURCES.length === 0) {
             return res.status(500).json({
                 error: 'No active news sources configured'
