@@ -233,11 +233,30 @@ const deleteComment = async (req, res) => {
 
     // Check if user owns the comment or is admin
     if (req.user && (comment.userId?.toString() === req.user._id || req.user.role === 'admin')) {
-      await Comment.findByIdAndDelete(id);
+
+      // Recursively delete all child comments and their votes
+      const deleteCommentAndChildren = async (commentId) => {
+        // Find all child comments
+        const childComments = await Comment.find({ parentCommentId: commentId });
+
+        // Recursively delete children first
+        for (const child of childComments) {
+          await deleteCommentAndChildren(child._id);
+        }
+
+        // Delete all votes for this comment
+        const UserVote = require("../models/UserVote");
+        await UserVote.deleteMany({ commentId: commentId });
+
+        // Delete the comment itself
+        await Comment.findByIdAndDelete(commentId);
+      };
+
+      await deleteCommentAndChildren(id);
 
       res.json({
         success: true,
-        message: "Comment deleted successfully"
+        message: "Comment and all replies deleted successfully"
       });
     } else {
       res.status(403).json({
@@ -277,83 +296,97 @@ const reactToComment = async (req, res) => {
       });
     }
 
-    const comment = await Comment.findById(id);
-
-    if (!comment) {
-      return res.status(404).json({
-        success: false,
-        error: "Comment not found"
-      });
-    }
-
-    // Check if user already voted on this comment
     const UserVote = require("../models/UserVote");
-    let existingVote = await UserVote.findOne({ 
-      userEmail: userEmail, 
-      commentId: id 
-    });
+    const mongoose = require("mongoose");
 
-    if (existingVote) {
-      // User already voted, update their vote
-      if (existingVote.vote === reaction) {
-        // User is clicking the same reaction, remove their vote
-        if (reaction === 'like') {
-          comment.likes = Math.max(0, comment.likes - 1);
+    // Use transaction to prevent race conditions
+    const session = await mongoose.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        // Find comment with lock to prevent race conditions
+        const comment = await Comment.findById(id).session(session);
+
+        if (!comment) {
+          throw new Error("Comment not found");
+        }
+
+        // Check if user already voted on this comment
+        let existingVote = await UserVote.findOne({
+          userEmail: userEmail,
+          commentId: id
+        }).session(session);
+
+        if (existingVote) {
+          // User already voted, update their vote
+          if (existingVote.vote === reaction) {
+            // User is clicking the same reaction, remove their vote
+            if (reaction === 'like') {
+              comment.likes = Math.max(0, comment.likes - 1);
+            } else {
+              comment.dislikes = Math.max(0, comment.dislikes - 1);
+            }
+            await UserVote.deleteOne({ _id: existingVote._id }).session(session);
+          } else {
+            // User is changing their vote
+            if (existingVote.vote === 'like') {
+              comment.likes = Math.max(0, comment.likes - 1);
+            } else {
+              comment.dislikes = Math.max(0, comment.dislikes - 1);
+            }
+
+            if (reaction === 'like') {
+              comment.likes += 1;
+            } else {
+              comment.dislikes += 1;
+            }
+
+            existingVote.vote = reaction;
+            // Get the actual voting user's ID if authenticated
+            if (req.user && req.user._id) {
+              existingVote.userId = req.user._id;
+            }
+            await existingVote.save({ session });
+          }
         } else {
-          comment.dislikes = Math.max(0, comment.dislikes - 1);
+          // User hasn't voted yet, add their vote
+          if (reaction === 'like') {
+            comment.likes += 1;
+          } else {
+            comment.dislikes += 1;
+          }
+
+          // Create new vote record
+          const voteData = {
+            userEmail: userEmail,
+            commentId: id,
+            vote: reaction
+          };
+
+          // Add the actual voting user's ID if authenticated (not the comment author's ID)
+          if (req.user && req.user._id) {
+            voteData.userId = req.user._id;
+          }
+
+          await UserVote.create([voteData], { session });
         }
-        await existingVote.deleteOne();
-      } else {
-        // User is changing their vote
-        if (existingVote.vote === 'like') {
-          comment.likes = Math.max(0, comment.likes - 1);
-        } else {
-          comment.dislikes = Math.max(0, comment.dislikes - 1);
-        }
-        
-        if (reaction === 'like') {
-          comment.likes += 1;
-        } else {
-          comment.dislikes += 1;
-        }
-        
-        existingVote.vote = reaction;
-        // Update userId if available from the comment
-        if (comment.userId) {
-          existingVote.userId = comment.userId;
-        }
-        await existingVote.save();
-      }
-    } else {
-      // User hasn't voted yet, add their vote
-      if (reaction === 'like') {
-        comment.likes += 1;
-      } else {
-        comment.dislikes += 1;
-      }
-      
-      // Create new vote record
-      const voteData = {
-        userEmail: userEmail,
-        commentId: id,
-        vote: reaction
-      };
-      
-      // Add userId if available from the comment
-      if (comment.userId) {
-        voteData.userId = comment.userId;
-      }
-      
-      await UserVote.create(voteData);
+
+        await comment.save({ session });
+      });
+
+      // Fetch the updated comment to return
+      const updatedComment = await Comment.findById(id);
+
+      res.json({
+        success: true,
+        comment: updatedComment,
+        message: `Comment ${reaction}d successfully`
+      });
+
+    } finally {
+      await session.endSession();
     }
 
-    await comment.save();
-
-    res.json({
-      success: true,
-      comment,
-      message: `Comment ${reaction}d successfully`
-    });
   } catch (error) {
     console.error("Error reacting to comment:", error);
     res.status(500).json({

@@ -12,15 +12,14 @@ exports.uploadAvatar = async (req, res) => {
     }
 
     const result = await cloudinary.uploader.upload_stream(
-      { 
-        folder: "avatars", 
+      {
+        folder: "avatars",
         resource_type: "image",
         width: 400,
         height: 400,
         crop: "fill",
         gravity: "face", // Automatically detect and center on face if possible
-        quality: "auto",
-        format: "auto"
+        quality: "auto"
       },
       async (error, result) => {
         if (error) {
