@@ -176,9 +176,23 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
             </div>
             {/* Comments section */}
             {openCommentId === item.link && (
-              <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
+              <div
+                className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <CustomComments
-                  post={{ slug: `rss_${btoa(item.link).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}`, title: item.title }}
+                  post={{
+                    slug: (() => {
+                      const slug = `rss_${btoa(item.link).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}`;
+                      console.log('🔍 RSS tab:', {
+                        title: item.title.substring(0, 40) + '...',
+                        link: item.link,
+                        slug
+                      });
+                      return slug;
+                    })(),
+                    title: item.title
+                  }}
                   postType="rss"
                   key={item.link}
                 />

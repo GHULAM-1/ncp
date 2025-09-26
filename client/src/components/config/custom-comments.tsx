@@ -433,42 +433,64 @@ const CustomComments: React.FC<CustomCommentsProps> = ({ post, postType = 'news'
     }
   };
 
-  const updateCommentVote = (commentId: string, reaction: 'like' | 'dislike', likes: number, dislikes: number) => {
+  const updateCommentVote = (commentId: string, reaction: 'like' | 'dislike', likes: number, dislikes: number, newUserVote: 'like' | 'dislike' | null) => {
     // Recursively update comment votes in the tree
-    const updateVoteInTree = (comments: Comment[], commentId: string, reaction: 'like' | 'dislike', likes: number, dislikes: number): Comment[] => {
+    const updateVoteInTree = (comments: Comment[], commentId: string, reaction: 'like' | 'dislike', likes: number, dislikes: number, newUserVote: 'like' | 'dislike' | null): Comment[] => {
       return comments.map(comment => {
         if (comment._id === commentId) {
           return {
             ...comment,
             likes,
             dislikes,
-            userVote: comment.userVote === reaction ? null : reaction
+            userVote: newUserVote
           };
         }
         if (comment.replies && comment.replies.length > 0) {
           return {
             ...comment,
-            replies: updateVoteInTree(comment.replies, commentId, reaction, likes, dislikes)
+            replies: updateVoteInTree(comment.replies, commentId, reaction, likes, dislikes, newUserVote)
           };
         }
         return comment;
       });
     };
 
-    setComments(prev => updateVoteInTree(prev, commentId, reaction, likes, dislikes));
+    setComments(prev => updateVoteInTree(prev, commentId, reaction, likes, dislikes, newUserVote));
   };
 
   const handleReaction = async (commentId: string, reaction: 'like' | 'dislike') => {
     try {
       if (!user?.email) return;
-      
+
       const response = await reactToComment(commentId, reaction, user.email);
       if (response.success) {
-        updateCommentVote(commentId, reaction, response.comment.likes, response.comment.dislikes);
+        // Calculate the new userVote based on server response and current state
+        const currentComment = findCommentById(comments, commentId);
+        const currentUserVote = currentComment?.userVote;
+
+        // If user clicked the same reaction they already have, remove vote (null)
+        // Otherwise, set to the new reaction
+        const newUserVote = currentUserVote === reaction ? null : reaction;
+
+        updateCommentVote(commentId, reaction, response.comment.likes, response.comment.dislikes, newUserVote);
       }
     } catch (error) {
       console.error("Error reacting to comment:", error);
     }
+  };
+
+  // Helper function to find comment by ID in nested structure
+  const findCommentById = (comments: Comment[], commentId: string): Comment | null => {
+    for (const comment of comments) {
+      if (comment._id === commentId) {
+        return comment;
+      }
+      if (comment.replies && comment.replies.length > 0) {
+        const found = findCommentById(comment.replies, commentId);
+        if (found) return found;
+      }
+    }
+    return null;
   };
 
   const handleReplyClick = (commentId: string) => {

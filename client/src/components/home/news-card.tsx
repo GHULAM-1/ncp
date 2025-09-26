@@ -13,6 +13,7 @@ interface NewsCardPropsWithCommentControl extends NewsCardProps {
 }
 
 const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
+  id,
   source,
   title,
   timeAgo,
@@ -22,20 +23,70 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
   openCommentId,
   onCommentToggle,
   postSlug,
+  platform,
 }) => {
-  // Create a consistent post slug from the link
-  const createPostSlug = (url: string) => {
-    try {
-      // Extract domain and path, or use a hash of the URL
-      const urlObj = new URL(url);
-      return `${urlObj.hostname}${urlObj.pathname}`.replace(/[^a-zA-Z0-9]/g, '_');
-    } catch {
-      // Fallback: create a hash from the URL
-      return btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+  // Create a consistent post slug that matches individual tabs
+  const createPostSlug = (url: string, platform?: string, id?: string) => {
+    switch (platform?.toLowerCase()) {
+      case 'youtube':
+        // Extract video ID from YouTube URL or use provided ID
+        const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+        const videoId = videoIdMatch ? videoIdMatch[1] : (id ? id.replace('yt_', '') : 'unknown');
+        return `youtube_${videoId}`;
+
+      case 'facebook':
+        // Use provided ID or extract from URL
+        const fbId = id ? id.replace('fb_', '') : 'unknown';
+        return `facebook_${fbId}`;
+
+      case 'rss':
+        console.log('🔍 RSS tab home page:', {
+          title: title.substring(0, 40) + '...',
+          link: url,
+          slug: `rss_${btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}`
+        });
+        // Use the same logic as RSS tab
+        return `rss_${btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}`;
+
+      default:
+        // Default URL-based slug for other content
+        try {
+          const urlObj = new URL(url);
+          return `${urlObj.hostname}${urlObj.pathname}`.replace(/[^a-zA-Z0-9]/g, '_');
+        } catch {
+          return btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+        }
     }
   };
 
-  const post = { slug: postSlug || createPostSlug(link), title };
+  // Determine the correct postType based on platform
+  const getPostType = (platform?: string): 'youtube' | 'facebook' | 'news' | 'rss' => {
+    switch (platform?.toLowerCase()) {
+      case 'youtube':
+        return 'youtube';
+      case 'facebook':
+        return 'facebook';
+      case 'rss':
+        return 'rss';
+      default:
+        return 'news';
+    }
+  };
+
+  const generatedSlug = createPostSlug(link, platform, id);
+  const post = { slug: generatedSlug, title };
+  const postType = getPostType(platform);
+
+  // Debug logging
+  console.log('🔍 Home page post:', {
+    platform,
+    postType,
+    link,
+    id,
+    generatedSlug,
+    title: title.substring(0, 30) + '...'
+  });
+
   const isCommentsOpen = openCommentId === postSlug || openCommentId === link;
 
   return (
@@ -112,7 +163,7 @@ const NewsCard: React.FC<NewsCardPropsWithCommentControl> = ({
 
         {isCommentsOpen && (
           <div className="mt-4 border-t  dark:border-gray-700 pt-4">
-            <CustomComments post={post} postType="news" key={post.slug} />
+            <CustomComments post={post} postType={postType} key={post.slug} />
           </div>
         )}
       </div>

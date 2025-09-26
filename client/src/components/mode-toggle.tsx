@@ -18,29 +18,29 @@ export function ModeToggle() {
   const isDark = theme === "dark";
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        Dark mode
-      </span>
+    <div className="flex items-center px-3 py-2">
       <button
         onClick={() => setTheme(isDark ? "light" : "dark")}
-        className={`relative hover:cursor-pointer w-14 h-7 rounded-full px-1 flex items-center transition-colors duration-300 ${
-          isDark ? "bg-gray-700" : "bg-yellow-300"
+        className={`relative hover:cursor-pointer w-16 h-8 rounded-full px-1 flex items-center transition-all duration-500 ease-in-out hover:scale-105 active:scale-95 ${
+          isDark 
+            ? "bg-gradient-to-r from-gray-700 to-gray-800 shadow-lg shadow-gray-900/50" 
+            : "bg-gradient-to-r from-yellow-300 to-yellow-400 shadow-lg shadow-yellow-300/50"
         }`}
+        aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       >
         <div
-          className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 transform ${
-            isDark ? "translate-x-7" : "translate-x-0"
+          className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-lg transition-all duration-500 ease-in-out transform ${
+            isDark ? "translate-x-8" : "translate-x-0"
           }`}
         />
         <Sun
-          className={`w-4 h-4 absolute left-1 text-yellow-500 transition-opacity ${
-            isDark ? "opacity-0" : "opacity-100"
+          className={`w-4 h-4 absolute left-1.5 text-yellow-500 transition-all duration-500 ease-in-out ${
+            isDark ? "opacity-0 scale-75" : "opacity-100 scale-100"
           }`}
         />
         <Moon
-          className={`w-4 h-4 absolute right-1 text-white transition-opacity ${
-            isDark ? "opacity-100" : "opacity-0"
+          className={`w-4 h-4 absolute right-1.5 text-slate-600 transition-all duration-500 ease-in-out ${
+            isDark ? "opacity-100 scale-100" : "opacity-0 scale-75"
           }`}
         />
       </button>

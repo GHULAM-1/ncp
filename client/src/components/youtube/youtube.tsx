@@ -479,7 +479,10 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
 
                 {/* Comments section */}
                 {openCommentId === video.videoId && (
-                  <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
+                  <div
+                    className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <CustomComments
                       post={{
                         slug: `youtube_${video.videoId}`,

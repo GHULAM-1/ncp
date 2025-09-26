@@ -48,17 +48,13 @@ export function LoginForm({
   return (
     <div
       className={cn(
-        "w-full max-w-[450px] mx-auto px-4 sm:px-6 md:px-8",
+        "w-full",
         className
       )}
       {...props}
     >
-      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 sm:mb-10 text-gray-900">
-        Welcome back
-      </h1>
-
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="email"
@@ -66,17 +62,17 @@ export function LoginForm({
               <FormItem>
                 <Label
                   htmlFor="email"
-                  className="text-sm sm:text-base font-medium text-gray-700"
+                  className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block"
                 >
-                  Email
+                  Email Address
                 </Label>
                 <FormControl>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Email address"
+                    placeholder="Enter your email"
                     disabled={isSubmitting}
-                    className="w-full h-12 sm:h-14 text-base sm:text-lg"
+                    className="w-full h-12 px-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[#33a47d] dark:focus:border-emerald-400 focus:ring-0 transition-all duration-200"
                     {...field}
                   />
                 </FormControl>
@@ -91,7 +87,7 @@ export function LoginForm({
               <FormItem>
                 <Label
                   htmlFor="password"
-                  className="text-sm sm:text-base font-medium text-gray-700"
+                  className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block"
                 >
                   Password
                 </Label>
@@ -99,9 +95,9 @@ export function LoginForm({
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Password"
+                    placeholder="Enter your password"
                     disabled={isSubmitting}
-                    className="w-full h-12 sm:h-14 text-base sm:text-lg"
+                    className="w-full h-12 px-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[#33a47d] dark:focus:border-emerald-400 focus:ring-0 transition-all duration-200"
                     {...field}
                   />
                 </FormControl>
@@ -111,23 +107,32 @@ export function LoginForm({
 
           <Button
             type="submit"
-            className="w-full h-12 sm:h-14 text-lg sm:text-xl bg-[#33a47d] hover:bg-emerald-700 text-white rounded-md transition-colors"
+            className="w-full h-12 text-base font-semibold bg-[#33a47d] hover:bg-emerald-700 text-white rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Signing in..." : "Continue"}
+            {isSubmitting ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Signing in...</span>
+              </div>
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
       </Form>
 
-      <p className="text-center mt-6 sm:mt-8 mb-2 text-base sm:text-lg text-gray-600">
-        Don&apos;t have an account?{" "}
-        <a
-          href="/signup"
-          className="text-emerald-600 hover:text-emerald-700 transition-colors font-medium"
-        >
-          Sign up
-        </a>
-      </p>
+      <div className="mt-8 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Don&apos;t have an account?{" "}
+          <a
+            href="/signup"
+            className="text-[#33a47d] dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors font-semibold hover:underline"
+          >
+            Create one now
+          </a>
+        </p>
+      </div>
 
       {/* <div className="relative my-6 sm:my-8">
         <div className="absolute inset-0 flex items-center">

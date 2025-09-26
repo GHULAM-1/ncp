@@ -65,23 +65,24 @@ export function SignUpForm({
   return (
     <div
       className={cn(
-        "w-full max-w-[830px] mx-auto px-4 sm:px-6 md:px-8",
+        "w-full",
         className
       )}
       {...props}
     >
-      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 sm:mb-10 text-gray-900">
-        Create Your Account
-      </h1>
-
       {error && (
-        <div className="bg-red-50 text-red-500 p-3 mb-4 rounded-md text-sm">
-          {error}
+        <div className="bg-red-50/80 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 mb-6 rounded-xl text-sm font-medium backdrop-blur-sm">
+          <div className="flex items-center space-x-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="email"
@@ -89,16 +90,16 @@ export function SignUpForm({
               <FormItem>
                 <Label
                   htmlFor="email"
-                  className="text-sm sm:text-base font-medium text-gray-700"
+                  className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block"
                 >
-                  Email
+                  Email Address
                 </Label>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="Email address"
+                    placeholder="Enter your email"
                     disabled={isSubmitting}
-                    className="h-12 sm:h-14 text-base sm:text-lg"
+                    className="w-full h-12 px-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[#33a47d] dark:focus:border-emerald-400 focus:ring-0 transition-all duration-200"
                     {...field}
                   />
                 </FormControl>
@@ -113,16 +114,16 @@ export function SignUpForm({
               <FormItem>
                 <Label
                   htmlFor="password"
-                  className="text-sm sm:text-base font-medium text-gray-700"
+                  className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block"
                 >
                   Password
                 </Label>
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder="Create a strong password"
                     disabled={isSubmitting}
-                    className="h-12 sm:h-14 text-base sm:text-lg"
+                    className="w-full h-12 px-4 text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[#33a47d] dark:focus:border-emerald-400 focus:ring-0 transition-all duration-200"
                     {...field}
                   />
                 </FormControl>
@@ -132,23 +133,32 @@ export function SignUpForm({
 
           <Button
             type="submit"
-            className="w-full h-12 sm:h-14 text-lg sm:text-xl bg-[#33a47d] hover:bg-emerald-700 text-white rounded-md transition-colors"
+            className="w-full h-12 text-base font-semibold bg-[#33a47d] hover:bg-emerald-700 text-white rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creating account..." : "Continue"}
+            {isSubmitting ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Creating account...</span>
+              </div>
+            ) : (
+              "Create Account"
+            )}
           </Button>
         </form>
       </Form>
 
-      <p className="text-center mt-6 sm:mt-8 mb-2 text-base sm:text-lg text-gray-600">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="text-emerald-600 hover:text-emerald-700 transition-colors font-medium"
-        >
-          Sign in
-        </Link>
-      </p>
+      <div className="mt-8 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-[#33a47d] dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors font-semibold hover:underline"
+          >
+            Sign in instead
+          </Link>
+        </p>
+      </div>
 
       {/* <div className="relative my-6 sm:my-8">
         <div className="absolute inset-0 flex items-center">
