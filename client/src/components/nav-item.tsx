@@ -2,7 +2,7 @@ import React from "react";
 import { NavItemProps } from "@/types/nav-item-prop-type";
 const NavItem: React.FC<NavItemProps> = ({ label, active }) => {
   return (
-    <div className="relative py-2 px-2 md:px-6 cursor-pointer group">
+    <div className="relative py-[10px] px-2 md:px-6 cursor-pointer group">
       <span
         className={`text-[14px] font-[500] transition-colors ${
           active

@@ -8,6 +8,8 @@ export interface YouTubeVideo {
   thumbnail: string;
   description: string;
   channelTitle: string;
+  channelId: string;
+  channelLogo: string;
   source: string;
   channelHandle?: string;
   isShort?: boolean;

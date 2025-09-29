@@ -93,19 +93,19 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#202124]/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-        <div className="flex justify-between items-center px-6 py-4 h-20">
+        <div className="flex justify-between items-center md:px-6 px-1 pt-4">
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative">
               <Image
                 src="/Icons/logo.jpeg"
                 alt="NCP Logo"
-                width={48}
-                height={48}
+                width={38}
+                height={38}
                 className="rounded-2xl transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+            <h1 className="text-xl md:block hidden sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
               NCP
             </h1>
           </Link>

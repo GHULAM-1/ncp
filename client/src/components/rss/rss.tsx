@@ -2,10 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { fetchBangladeshNews, NewsItem, NewsResponse } from "@/api/news/api";
 import Loader from "../loader";
-import {
-  Calendar,
-  MessageSquare,
-} from "lucide-react";
+import { Calendar, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ShareButton from "../home/share-button";
 import CustomComments from "../config/custom-comments";
@@ -24,7 +21,9 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
 
   // Infinite scroll states
   const PAGE_SIZE = 30; // Match server limit
-  const [displayed, setDisplayed] = useState<NewsItem[]>(initialNews.news || []);
+  const [displayed, setDisplayed] = useState<NewsItem[]>(
+    initialNews.news || []
+  );
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialNews.hasMore || false);
   const page = useRef(1);
@@ -104,20 +103,45 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
             className="bg-white dark:bg-[#1f2125] px-4 cursor-pointer"
             onClick={() => handleCardClick(item.link)}
           >
-            <div className="border-b border-gray-200 dark:border-gray-700 py-4">
-              <div className="flex flex-col sm:flex-row">
-                <div className="flex-1 pr-0 sm:pr-4 sm:mb-0">
+            <div className="border-b border-gray-200 dark:border-gray-700 pt-2 pb-2">
+              <div className="flex flex-row gap-4">
+                {/* Content */}
+                <div className="flex-1">
+                  {/* Provider name */}
                   <span className="text-xs sm:text-sm font-[400] text-[#202124] dark:text-gray-100">
                     {item.source}
                   </span>
-                  <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-[#202124] dark:text-gray-100">
+
+                  <h3 className="mt-1 mb-2 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-[#202124] dark:text-gray-100">
                     {item.title}
                   </h3>
+                  <p className="text-[12px] text-[#717478] dark:text-[#c4c7c5]">
+                    {" "}
+                    {item.date
+                      ? formatDistanceToNow(new Date(item.date), {
+                          addSuffix: true,
+                        })
+                      : "Unknown date"}
+                  </p>
                 </div>
+                {/* Image */}
+                {item.image && (
+                  <div className="flex-shrink-0  rounded">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-38 h-23 object-cover  rounded"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[#202124] dark:text-gray-100 text-xs sm:text-sm">
-                <div className="flex text-[12px] text-[#717478] dark:text-[#c4c7c5] items-center gap-x-2">
+              <div className="mt-3 flex flex-wrap items-center justify-end gap-2 text-[#202124] dark:text-gray-100 text-xs sm:text-sm">
+                {/* <div className="flex text-[12px] text-[#717478] dark:text-[#c4c7c5] items-center gap-x-2">
                   <Calendar className="h-3 w-3" />
                   <span>
                     {item.date
@@ -130,7 +154,7 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                   <span className="font-semibold text-[#5a5a5a] dark:text-[#c4c7c5]">
                     By {item.source}
                   </span>
-                </div>
+                </div> */}
 
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2">
@@ -143,7 +167,9 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                           e.stopPropagation();
                           onCommentToggle(item.link);
                         }}
-                        className="px-3 hover:cursor-pointer py-2 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                        className="px-3 hover:cursor-pointer py-2 text-sm rounded transition   text-black hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700 
+              dark:border-[#292a2d] shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+                        "
                       >
                         {openCommentId === item.link
                           ? "Close Comments"
@@ -161,7 +187,8 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                           e.stopPropagation();
                           onCommentToggle(item.link);
                         }}
-                        className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700
+                        "
                         title="Comments"
                       >
                         <MessageSquare
@@ -177,21 +204,23 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
             {/* Comments section */}
             {openCommentId === item.link && (
               <div
-                className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4"
+                className="border-b border-gray-200 dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
               >
                 <CustomComments
                   post={{
                     slug: (() => {
-                      const slug = `rss_${btoa(item.link).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}`;
-                      console.log('🔍 RSS tab:', {
-                        title: item.title.substring(0, 40) + '...',
+                      const slug = `rss_${btoa(item.link)
+                        .replace(/[^a-zA-Z0-9]/g, "_")
+                        .substring(0, 20)}`;
+                      console.log("🔍 RSS tab:", {
+                        title: item.title.substring(0, 40) + "...",
                         link: item.link,
-                        slug
+                        slug,
                       });
                       return slug;
                     })(),
-                    title: item.title
+                    title: item.title,
                   }}
                   postType="rss"
                   key={item.link}

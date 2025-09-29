@@ -5,6 +5,8 @@ export interface NewsItem {
   link: string;
   date: string;
   source: string;
+  description?: string;
+  image?: string;
 }
 
 export interface NewsResponse {

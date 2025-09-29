@@ -9,21 +9,21 @@ const Navigation: React.FC = () => {
 
   return (
     <nav className="flex items-center w-full sm:justify-center">
-      <div className="flex items-end mt-1 whitespace-nowrap">
+      <div className="flex items-end mt-1 whitespace-nowrap ">
         <Link href="/">
           <NavItem label="Home" active={pathname === "/"} />
         </Link>
-        <Link href="https://n-cp.discourse.group/latest" target="_blank">
-          <NavItem label="Forum" active={pathname === "/forum"} />
-        </Link>
         <Link href="/rss">
-          <NavItem label="RSS" active={pathname === "/rss"} />
+          <NavItem label="News" active={pathname === "/rss"} />
         </Link>
         <Link href="/youtube">
-          <NavItem label="YouTube" active={pathname === "/youtube"} />
+          <NavItem label="Videos" active={pathname === "/youtube"} />
         </Link>
         <Link href="/facebook">
-          <NavItem label="Facebook" active={pathname === "/facebook"} />
+          <NavItem label="Social" active={pathname === "/facebook"} />
+        </Link>
+        <Link href="https://n-cp.discourse.group/latest" target="_blank">
+          <NavItem label="Forum" active={pathname === "/forum"} />
         </Link>
       </div>
     </nav>

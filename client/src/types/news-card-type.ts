@@ -10,7 +10,7 @@ export interface NewsCardProps {
   slug: string;
   link: string;
   date?: string;
-  platform?: 'youtube' | 'facebook' | 'rss';
+  platform?: 'youtube' | 'facebook' | 'rss' | 'news';
   type?: 'video' | 'post' | 'news';
   profilePicture?: string | null;
   engagement?: {
@@ -20,4 +20,13 @@ export interface NewsCardProps {
     reactions?: number;
     shares?: number;
   };
+  // Additional platform-specific properties
+  videoId?: string;
+  channelLogo?: string;
+  channelTitle?: string;
+  channelHandle?: string;
+  channelId?: string;
+  postId?: string;
+  thumbnail?: string;
+  videoUrl?: string;
 }

@@ -29,13 +29,15 @@ interface YouTubeNewsProps {
 }
 
 export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
-  const [videos, setVideos] = useState<YouTubeVideo[]>(initialData.channels.videos || []);
+  const [videos, setVideos] = useState<YouTubeVideo[]>(
+    initialData.channels.videos || []
+  );
   const [loading, setLoading] = useState(false); // Start with false since we have initial data
   const [tabLoading, setTabLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ContentType>("channels");
-  const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   const onCommentToggle = (id: string) => {
     setOpenCommentId(openCommentId === id ? null : id);
@@ -44,9 +46,9 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
   // API Quota Management - Adjust these for free API limits also see line 140
   const API_QUOTA_LIMITS = {
     // Free API: Reduce these numbers to save quota
-    INITIAL_LOAD_SIZE: 20, // Reduced from 20 to 10 for free API
-    PAGE_SIZE: 10, // Reduced from 10 to 5 for free API
-    MAX_TOTAL_VIDEOS: 50, // Maximum total videos to load across all pages
+    INITIAL_LOAD_SIZE: 5, // Reduced from 20 to 10 for free API
+    PAGE_SIZE: 5, // Reduced from 10 to 5 for free API
+    MAX_TOTAL_VIDEOS: 1, // Maximum total videos to load across all pages
     SEARCH_QUERIES_PER_CHANNEL: 4, // Reduce search queries per channel (was 4)
     DELAY_BETWEEN_REQUESTS: 100, // Increase delay between API calls (was 100ms)
   } as const;
@@ -61,9 +63,9 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   const contentTypes: { type: ContentType; label: string; icon: string }[] = [
-    { type: "channels", label: "News Channels", icon: "📺" },
+    { type: "youtube", label: "Shorts", icon: "📱" },
+    { type: "channels", label: "News", icon: "📺" },
     { type: "talkshows", label: "Talk Shows", icon: "🎤" },
-    { type: "youtube", label: "YouTube Shorts", icon: "📱" },
   ];
 
   // Function to load videos by type
@@ -123,12 +125,18 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
       setDisplayed(initialData.channels.videos);
       setHasMore(initialData.channels.hasMore);
       setTabLoading(false);
-    } else if (activeTab === "talkshows" && initialData.talkshows.videos.length > 0) {
+    } else if (
+      activeTab === "talkshows" &&
+      initialData.talkshows.videos.length > 0
+    ) {
       setVideos(initialData.talkshows.videos);
       setDisplayed(initialData.talkshows.videos);
       setHasMore(initialData.talkshows.hasMore);
       setTabLoading(false);
-    } else if (activeTab === "youtube" && initialData.youtube.videos.length > 0) {
+    } else if (
+      activeTab === "youtube" &&
+      initialData.youtube.videos.length > 0
+    ) {
       setVideos(initialData.youtube.videos);
       setDisplayed(initialData.youtube.videos);
       setHasMore(initialData.youtube.hasMore);
@@ -205,11 +213,12 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
     if (type !== activeTab) {
       setActiveTab(type);
       setError(null);
-      
+      setPlayingVideoId(null); // Reset playing video when changing tabs
+
       // Use initial data from ISR if available
       let initialVideos: YouTubeVideo[] = [];
       let initialHasMore = false;
-      
+
       switch (type) {
         case "channels":
           initialVideos = initialData.channels.videos || [];
@@ -224,7 +233,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
           initialHasMore = initialData.youtube.hasMore || false;
           break;
       }
-      
+
       if (initialVideos.length > 0) {
         // Use initial data from ISR
         setVideos(initialVideos);
@@ -239,58 +248,20 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
         setHasMore(true);
         loadVideos(type);
       }
-      
+
       page.current = 1;
     }
   };
 
   const handleCardClick = (video: YouTubeVideo) => {
-    setSelectedVideo(video);
+    setPlayingVideoId(playingVideoId === video.videoId ? null : video.videoId);
   };
-
-  const closeVideo = () => {
-    setSelectedVideo(null);
-  };
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (selectedVideo) {
-      // Store current scroll position
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-    } else {
-      // Restore scroll position
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    // Cleanup function to restore scroll when component unmounts
-    return () => {
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    };
-  }, [selectedVideo]);
 
   return (
     <div className="container max-w-[840px] mx-auto pb-8">
       {/* Tab Navigation */}
       <div className="flex sticky justify-center">
-        <div className="mb-6 w-full lg:max-w-[90%]">
+        <div className="my-2 w-full lg:max-w-[90%]">
           <div className="flex gap-[8px] justify-center">
             {contentTypes.map(({ type, label, icon }, index) => (
               <button
@@ -320,7 +291,11 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
       )}
 
       <div className="space-y-0 rounded-2xl  overflow-hidden">
-        {loading && !tabLoading && (!initialData.channels.videos.length && !initialData.talkshows.videos.length && !initialData.youtube.videos.length) ? (
+        {loading &&
+        !tabLoading &&
+        !initialData.channels.videos.length &&
+        !initialData.talkshows.videos.length &&
+        !initialData.youtube.videos.length ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -347,18 +322,32 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
             {displayed.map((video, index) => (
               <div
                 key={`${video.videoId}-${index}`}
-                className="bg-white dark:bg-[#1f2125] px-4 cursor-pointer"
+                className="bg-white dark:bg-[#1f2125] px-0 cursor-pointer"
                 onClick={() => handleCardClick(video)}
               >
-                <div className="border-b border-gray-200 dark:border-gray-700 py-4">
-                  {/* Big Image on Top */}
+                <div className="border-b border-gray-200 dark:border-gray-700 pt-4 pb-2">
+                  {/* Video Player or Thumbnail */}
                   <div className="mb-6">
-                    {video.thumbnail ? (
-                      <div className="relative w-full h-72 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
+                    {playingVideoId === video.videoId ? (
+                      <div
+                        className="relative w-full h-82 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <iframe
+                          src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1`}
+                          title={video.title}
+                          className="w-full h-full rounded-[16px]"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : video.thumbnail ? (
+                      <div className="relative w-full h-82 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
                         <img
                           src={video.thumbnail}
                           alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover transition-transform duration-300"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = "none";
@@ -395,82 +384,115 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                             {video.channelTitle}
                           </p>
                         </div>
-
                       </div>
                     )}
                   </div>
 
                   {/* Content Layout: Text on Left, Buttons on Right */}
-                  <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-6 px-4">
                     {/* Left Side - Text Content */}
                     <div className="flex-1">
-                      <span className="inline-block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full mb-4">
-                          <>
-                            <span className="block sm:hidden ">
-                                {video.source.length > 8 ? video.source.substring(0, 24) + '...' : video.source}
+                      <div className="flex gap-2">
+                        <a
+                          href={
+                            video.channelHandle
+                              ? `https://www.youtube.com/@${video.channelHandle}`
+                              : video.channelId
+                                ? `https://www.youtube.com/channel/${video.channelId}`
+                                : `https://www.youtube.com/results?search_query=${encodeURIComponent(video.channelTitle)}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <img
+                            src={video.channelLogo}
+                            alt={video.channelTitle}
+                            className="w-10 h-10 rounded-full hover:opacity-80 transition-opacity"
+                          />
+                        </a>
+
+                        <div className="w-full">
+                          <div>
+                            <a
+                              href={video.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <h3 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400">
+                                {video.title}
+                              </h3>
+                            </a>
+                          </div>
+                          <div className="flex text-[#AAAAAA] flex-col gap-1">
+                            <div className="flex items-center rounded gap-2 pt-1 ">
+                              {/* <User className="h-3 w-3 sm:h-4 sm:w-4" /> */}
+                              <a
+                                href={
+                                  video.channelHandle
+                                    ? `https://www.youtube.com/@${video.channelHandle}`
+                                    : video.channelId
+                                      ? `https://www.youtube.com/channel/${video.channelId}`
+                                      : `https://www.youtube.com/results?search_query=${encodeURIComponent(video.channelTitle)}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-xs sm:text-sm font-medium hover:underline hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                              >
+                                {video.channelTitle}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-2 rounded ">
+                              {/* <Calendar className="h-3 w-3 sm:h-4 sm:w-4" /> */}
+                              <span className="text-xs sm:text-sm sm:font-medium">
+                                {video.publishedAt
+                                  ? formatDistanceToNow(
+                                      new Date(video.publishedAt),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )
+                                  : "Unknown date"}
                               </span>
-                            <span className="hidden sm:block">
-                              {video.source}
-                            </span>
-                          </>
-
-                      </span>
-                      <h3 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400">
-                        {video.title}
-                      </h3>
-
-                      {/* Commented out description as requested */}
-                      {/* <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mt-2">
-                        {video.description}
-                      </p> */}
-
-                      {/* Metadata */}
-                      <div className="flex flex-wrap items-center justify-between gap-4 mt-6 text-sm text-gray-500 dark:text-gray-400">
-                        <div className="flex flex-row gap-2">
-                          <div className="flex items-center gap-2 rounded bg-gray-50 dark:bg-gray-800 px-3 py-2 ">
-                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm sm:font-medium">
-                              {video.publishedAt
-                                ? formatDistanceToNow(
-                                    new Date(video.publishedAt),
-                                    {
-                                      addSuffix: true,
-                                    }
-                                  )
-                                : "Unknown date"}
-                            </span>
+                            </div>
                           </div>
-                          <div className="flex items-center rounded gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 ">
-                            <User className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm font-medium">
-                              {video.channelTitle}
-                            </span>
+                          {/* Metadata */}
+                          <div className="flex flex-wrap items-center justify-end gap-4 mt-0 text-sm text-gray-500 dark:text-gray-400">
+                            {/* Right Side - Action Buttons */}
+                            <div className="flex flex-row  gap-3 lg:flex-shrink-0 ">
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className=""
+                              >
+                                <ShareButton
+                                  url={video.url}
+                                  title={video.title}
+                                />
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCommentToggle(video.videoId);
+                                }}
+                                className="flex-1 lg:flex-none md:px-6 text-sm font-medium rounded  transition-all duration-200   text-black hover:bg-gray-100  dark:text-white dark:hover:bg-gray-700 
+                                hover:cursor-pointer
+                                hover:shadow-md active:scale-95 shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+                                "
+                              >
+                                <span className="block md:hidden">
+                                  <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                                </span>
+                                <span className="hidden md:block">
+                                  {openCommentId === video.videoId
+                                    ? "Close Comments"
+                                    : "Show Comments"}
+                                </span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                        {/* Right Side - Action Buttons */}
-                        <div className="flex flex-row  gap-3 lg:flex-shrink-0 ">
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className=""
-                          >
-                            <ShareButton url={video.url} title={video.title} />
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onCommentToggle(video.videoId);
-                            }}
-                            className="flex-1 lg:flex-none md:px-6 text-sm font-medium rounded transition-all duration-200 md:border border-gray-300 text-black hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 hover:shadow-md active:scale-95"
-                          >
-                            <span className="block md:hidden">
-                              <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                            </span>
-                            <span className="hidden md:block">
-                              {openCommentId === video.videoId
-                                ? "Close Comments"
-                                : "Show Comments"}
-                            </span>
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -480,7 +502,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                 {/* Comments section */}
                 {openCommentId === video.videoId && (
                   <div
-                    className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4"
+                    className=" border-b border-gray-200 dark:border-gray-700 "
                     onClick={(e) => e.stopPropagation()}
                   >
                     <CustomComments
@@ -523,77 +545,6 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
             Try switching to a different tab.
           </p>
-        </div>
-      )}
-
-      {/* Embedded Video Modal */}
-      {selectedVideo && (
-        <div className="fixed inset-0 bg-black/30  flex items-center justify-center z-50 p-4">
-          <div className="bg-white  dark:bg-[#1f2125] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {selectedVideo.title}
-              </h3>
-              <button
-                onClick={closeVideo}
-                className="text-gray-500 hover:cursor-pointer hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4">
-              <div
-                className="relative w-full"
-                style={{ paddingBottom: "56.25%" }}
-              >
-                <iframe
-                  src={`https://www.youtube.com/embed/${selectedVideo.videoId}`}
-                  title={selectedVideo.title}
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <div className="mt-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  {selectedVideo.title}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  {selectedVideo.description}
-                </p>
-                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <span className="mr-4">
-                    <Calendar className="inline w-4 h-4 mr-1" />
-                    {selectedVideo.publishedAt
-                      ? formatDistanceToNow(
-                          new Date(selectedVideo.publishedAt),
-                          {
-                            addSuffix: true,
-                          }
-                        )
-                      : "Unknown date"}
-                  </span>
-                  <span>
-                    <User className="inline w-4 h-4 mr-1" />
-                    {selectedVideo.channelTitle}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

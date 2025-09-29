@@ -59,12 +59,18 @@ async function getUnifiedFeed() {
             id: `yt_${video.videoId || index}`,
             title: video.title,
             description: video.description || '',
-            link: video.videoUrl || `https://www.youtube.com/watch?v=${video.videoId}`,
+            link: video.videoUrl || video.url || `https://www.youtube.com/watch?v=${video.videoId}`,
             image: video.thumbnail,
             date: video.publishedAt,
             source: video.channelTitle || 'YouTube',
             platform: 'youtube',
             type: 'video',
+            // Additional YouTube-specific data
+            videoId: video.videoId,
+            channelLogo: video.channelLogo,
+            channelTitle: video.channelTitle,
+            channelHandle: video.channelHandle,
+            channelId: video.channelId,
             engagement: {
               views: video.viewCount || 0,
               likes: video.likeCount || 0,
@@ -90,10 +96,13 @@ async function getUnifiedFeed() {
             link: post.url || '#',
             image: post.image,
             date: post.publishedAt,
-            source: post.author || 'Facebook',
+            source: post.source || post.author || 'Facebook',
             platform: 'facebook',
             type: post.type || 'post',
+            // Additional Facebook-specific data
+            author: post.author,
             profilePicture: post.profilePicture || null,
+            postId: post.postId,
             engagement: {
               reactions: post.engagement?.totalReactions || 0,
               likes: post.engagement?.likes || 0,
@@ -118,7 +127,7 @@ async function getUnifiedFeed() {
             title: item.title,
             description: item.description || '',
             link: item.link,
-            image: null, // RSS typically doesn't have images
+            image: item.image || null, // RSS now includes images
             date: item.date,
             source: item.source || 'RSS Feed',
             platform: 'rss',
@@ -170,7 +179,7 @@ export default async function Page() {
     link: item.link,
     imageUrl: item.image,
     timeAgo: item.date ? formatDistanceToNow(new Date(item.date), { addSuffix: true }) : undefined,
-    author: item.source || item.author,
+    author: item.author || item.source,
     date: item.date,
     source: item.source || '',
     platform: item.platform,
@@ -178,11 +187,22 @@ export default async function Page() {
     profilePicture: item.profilePicture,
     engagement: item.engagement,
     slug: `${item.platform}-${index}`,
-    id: item.id
+    id: item.id,
+    // Pass through additional platform-specific data
+    ...(item.platform === 'youtube' && {
+      videoId: item.videoId,
+      channelLogo: item.channelLogo,
+      channelTitle: item.channelTitle,
+      channelHandle: item.channelHandle,
+      channelId: item.channelId,
+    }),
+    ...(item.platform === 'facebook' && {
+      postId: item.postId,
+    }),
   }));
 
   return (
-    <main className="max-w-[840px] mx-auto">      
+    <main className="max-w-[840px] mx-auto px-4 py-8">      
       <NewsFeed newsItems={newsItems} />
     </main>
   );

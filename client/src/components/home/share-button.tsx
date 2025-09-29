@@ -17,9 +17,11 @@ const ShareButton: React.FC<ShareButtonProps> = ({
     <>
       <button
         onClick={handleShare}
-        className="px-3 py-2 border text-sm hidden md:flex border-gray-300 text-black rounded transition hover:cursor-pointer 
+        className="px-3 py-2  text-sm hidden md:flex  text-black rounded transition hover:cursor-pointer 
              hover:bg-gray-200 
-             dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+              dark:text-white dark:hover:bg-gray-700 
+               shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+             "
         aria-label="Share"
       >
         Share

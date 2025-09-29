@@ -34,9 +34,22 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
     initialData ? new Date().toISOString() : ""
   );
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
+    new Set()
+  );
 
   const onCommentToggle = (id: string) => {
     setOpenCommentId(openCommentId === id ? null : id);
+  };
+
+  const toggleDescription = (postId: string) => {
+    const newExpanded = new Set(expandedDescriptions);
+    if (newExpanded.has(postId)) {
+      newExpanded.delete(postId);
+    } else {
+      newExpanded.add(postId);
+    }
+    setExpandedDescriptions(newExpanded);
   };
 
   // Function to load posts (only when needed)
@@ -72,6 +85,15 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
     window.open(url, "_blank");
   };
 
+  const handleAuthorClick = (source: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Extract Facebook page URL from source
+    const facebookPageUrl = source.startsWith("http")
+      ? source
+      : `https://www.facebook.com/${source}`;
+    window.open(facebookPageUrl, "_blank");
+  };
+
   if (loading && posts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -101,15 +123,21 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
     <div className="container max-w-[840px] mx-auto px-4 py-8">
       <div className="space-y-0 rounded-2xl overflow-hidden">
         {posts.map((post, index) => (
-          <div key={`${post.postId}-${index}`} className="bg-white dark:bg-[#1f2125] px-4">
+          <div
+            key={`${post.postId}-${index}`}
+            className="bg-white dark:bg-[#1f2125] px-4"
+          >
             <div
               className="cursor-pointer"
               onClick={() => handleCardClick(post.url)}
             >
-              <div className=" border-gray-200 dark:border-gray-700 py-4">
+              <div className=" border-gray-200 dark:border-gray-700 pt-4">
                 <div className="flex items-center gap-5 mb-3">
                   {post.profilePicture ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <div
+                      className="w-10 h-10 rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) => handleAuthorClick(post.source, e)}
+                    >
                       <img
                         src={post.profilePicture}
                         alt={post.author}
@@ -126,12 +154,18 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div
+                      className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) => handleAuthorClick(post.source, e)}
+                    >
                       <User className="h-5 w-5 text-white" />
                     </div>
                   )}
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                    <h4
+                      className="font-semibold text-gray-900 dark:text-white text-sm cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                      onClick={(e) => handleAuthorClick(post.source, e)}
+                    >
                       {post.author}
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -143,20 +177,56 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
                           : "Unknown date"}
                       </span>
                       <span>•</span>
-                      <span>{post.source.split('facebook.com/')[1] || post.source}</span>
+                      <span>
+                        {post.source.split("facebook.com/")[1] || post.source}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <div className="mb-3">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 leading-relaxed">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
-                    {post.description}
-                  </p>
-                </div>
+                {post.description &&
+                  post.description.trim() &&
+                  !post.description.startsWith(
+                    "[Post without text content"
+                  ) && (
+                    <div className="mb-3">
+                      {/* <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 leading-relaxed">
+                      {post.title}
+                    </h3> */}
+                      <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        {(() => {
+                          const isExpanded = expandedDescriptions.has(
+                            post.postId
+                          );
+                          const shouldShowReadMore =
+                            post.description && post.description.length > 200;
+                          const displayText =
+                            shouldShowReadMore && !isExpanded
+                              ? post.description.substring(0, 200)
+                              : post.description;
+
+                          return (
+                            <p>
+                              {displayText}
+                              {shouldShowReadMore && !isExpanded && "... "}
+                              {shouldShowReadMore && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleDescription(post.postId);
+                                  }}
+                                  className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm inline"
+                                >
+                                  {isExpanded ? " Read less" : "See more"}
+                                </button>
+                              )}
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
 
                 {/* Image */}
                 {post.image &&
@@ -184,7 +254,18 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
                   <div className="w-full h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-3">
                     <div className="text-center text-white">
                       <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
-                        <User className="h-6 w-6 text-white" />
+                        <img
+                          src={post.profilePicture || ""}
+                          alt={post.author}
+                          className="w-full rounded-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            target.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
+                          }}
+                        />{" "}
                       </div>
                       <p className="text-sm font-medium">{post.author}</p>
                     </div>
@@ -194,27 +275,20 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
             </div>
 
             {/* Action buttons and comments */}
-            <div className="mt-3 flex flex-wrap border-gray-200  border-b-[1px] pb-4 items-center justify-between gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
-              <div className="flex text-[12px] text-[#c4c7c5] items-center gap-x-2">
-                <span>
-                  {post.publishedAt
-                    ? formatDistanceToNow(new Date(post.publishedAt), {
-                        addSuffix: true,
-                      })
-                    : "Unknown date"}
-                </span>
-                <span>•</span>
-                <span>{post.source.split('facebook.com/')[1] || post.source}</span>
-              </div>
-
+            <div className="mt-3 flex flex-wrap border-gray-200  border-b-[1px] pb-2 items-center justify-end gap-2 text-gray-600 dark:text-gray-100 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <div className="hidden md:flex items-center gap-2">
                   <ShareButton url={post.url} title={post.title} />
                   <button
                     onClick={() => onCommentToggle(post.postId)}
-                    className="px-3 hover:cursor-pointer py-1.5 text-sm rounded transition border border-gray-300 text-black hover:bg-gray-200 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                    className="px-3 hover:cursor-pointer py-2 text-sm rounded transition  text-black hover:bg-gray-200 
+                           dark:text-white dark:hover:bg-gray-700 
+               shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+                    "
                   >
-                    {openCommentId === post.postId ? "Close Comments" : "Show Comments"}
+                    {openCommentId === post.postId
+                      ? "Close Comments"
+                      : "Show Comments"}
                   </button>
                 </div>
 
@@ -237,11 +311,11 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
 
             {/* Comments section */}
             {openCommentId === post.postId && (
-              <div className="mt-4 border-b border-gray-200 dark:border-gray-700 pt-4">
-                <CustomComments 
-                  post={{ slug: `facebook_${post.postId}`, title: post.title }} 
+              <div className=" border-b border-gray-200 dark:border-gray-700">
+                <CustomComments
+                  post={{ slug: `facebook_${post.postId}`, title: post.title }}
                   postType="facebook"
-                  key={post.postId} 
+                  key={post.postId}
                 />
               </div>
             )}

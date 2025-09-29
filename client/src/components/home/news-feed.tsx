@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import NewsCard from "./news-card";
+import UnifiedCard from "./unified-card";
 import Loader from "../loader";
 import { NewsCardProps } from "@/types/news-card-type";
 
@@ -16,12 +16,18 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
   );
   const [loading, setLoading] = useState(false);
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const page = useRef(1);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   // Comment toggle handler - automatically closes other comments
   const handleCommentToggle = (id: string) => {
     setOpenCommentId(openCommentId === id ? null : id);
+  };
+
+  // Video play handler for YouTube videos
+  const handleVideoPlay = (videoId: string) => {
+    setPlayingVideoId(playingVideoId === videoId ? null : videoId);
   };
 
   // HANDLERS (Delay Added)
@@ -70,15 +76,39 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
               return btoa(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
             }
           };
-          
+
           const postSlug = createPostSlug(item.link);
-          
+
+          // Extract additional data based on platform
+          let additionalProps = {};
+
+          if (item.platform === 'youtube') {
+            // Extract video ID from URL or use ID
+            const videoIdMatch = item.link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+            const videoId = videoIdMatch ? videoIdMatch[1] : (item.id ? item.id.replace('yt_', '') : 'unknown');
+
+            additionalProps = {
+              videoId,
+              thumbnail: item.imageUrl,
+              channelTitle: item.source,
+              channelLogo: item.imageUrl, // You might want to add channelLogo to your data structure
+              videoUrl: item.link,
+            };
+          } else if (item.platform === 'facebook') {
+            additionalProps = {
+              profilePicture: item.profilePicture,
+            };
+          }
+
           return (
-            <NewsCard 
-              key={item.slug} 
-              {...item} 
+            <UnifiedCard
+              key={item.slug}
+              {...item}
+              {...additionalProps}
               openCommentId={openCommentId}
               onCommentToggle={handleCommentToggle}
+              onVideoPlay={handleVideoPlay}
+              playingVideoId={playingVideoId}
               postSlug={postSlug}
             />
           );
