@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 
 export default function CookieBanner() {
-  //STATES
   const [isVisible, setIsVisible] = useState(false);
   //HANDLERS
   useEffect(() => {
