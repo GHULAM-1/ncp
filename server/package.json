@@ -28,6 +28,7 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
+    "rss-parser": "^3.13.0",
     "serverless-http": "^3.2.0",
     "sheetdb-node": "^0.0.12",
     "streamifier": "^0.1.1"

@@ -331,13 +331,17 @@ const fetchYouTubeVideos = async (channels, maxResults, apiKey) => {
   console.log("📊 Final distribution across channels:", channelDistribution);
   console.log(`✅ Returning ${finalVideos.length} shuffled videos from all channels`);
 
-  return finalVideos.map((item) => {
+  return Promise.all(finalVideos.map(async (item) => {
     const thumbnails = item.snippet.thumbnails;
     const thumbnail =
       thumbnails.high?.url ||
       thumbnails.medium?.url ||
       thumbnails.default?.url ||
       "";
+
+    // Fetch channel logo - defensive check for channelId
+    const channelLogo = item.snippet.channelId ?
+      await fetchChannelLogo(item.snippet.channelId, apiKey) : "";
 
     return {
       title: item.snippet.title,
@@ -347,9 +351,11 @@ const fetchYouTubeVideos = async (channels, maxResults, apiKey) => {
       thumbnail: thumbnail,
       description: item.snippet.description,
       channelTitle: item.snippet.channelTitle,
+      channelId: item.snippet.channelId,
+      channelLogo: channelLogo,
       source: "YouTube",
     };
-  });
+  }));
 };
 
 // Function to fetch Shorts from specific channels
@@ -433,6 +439,10 @@ const fetchShortsFromChannels = async (channelUrls, maxResults, apiKey) => {
                 thumbnails.default?.url ||
                 "";
 
+              // Fetch channel logo - channelId is already validated from channel lookup
+              const channelLogo = channelId ?
+                await fetchChannelLogo(channelId, apiKey) : "";
+
               // Add to channel's video collection
               channelVideos.push({
                 title: videoDetails.snippet.title,
@@ -442,6 +452,8 @@ const fetchShortsFromChannels = async (channelUrls, maxResults, apiKey) => {
                 thumbnail: thumbnail,
                 description: videoDetails.snippet.description,
                 channelTitle: videoDetails.snippet.channelTitle,
+                channelId: channelId,
+                channelLogo: channelLogo,
                 source: "YouTube Shorts",
                 channelHandle: channelHandle,
                 isShort: true,
@@ -536,12 +548,36 @@ const parseDuration = (duration) => {
   // YouTube duration format: PT1M30S (1 minute 30 seconds)
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
-  
+
   const hours = parseInt(match[1]) || 0;
   const minutes = parseInt(match[2]) || 0;
   const seconds = parseInt(match[3]) || 0;
-  
+
   return hours * 3600 + minutes * 60 + seconds;
+};
+
+// Helper function to fetch channel logo
+const fetchChannelLogo = async (channelId, apiKey) => {
+  try {
+    if (!channelId || !apiKey) {
+      return "";
+    }
+
+    const channelInfoUrl = `https://www.googleapis.com/youtube/v3/channels?key=${apiKey}&id=${channelId}&part=snippet`;
+    const response = await makeHttpRequest(channelInfoUrl);
+
+    if (response.ok && response.json().items && response.json().items.length > 0) {
+      const channelData = response.json().items[0];
+      const thumbnails = channelData.snippet.thumbnails;
+      return thumbnails.high?.url ||
+             thumbnails.medium?.url ||
+             thumbnails.default?.url ||
+             "";
+    }
+  } catch (error) {
+    console.error(`Error fetching channel logo for ${channelId}:`, error.message);
+  }
+  return "";
 };
 
 // Function to fetch videos from a specific playlist
@@ -571,7 +607,7 @@ const fetchPlaylistVideos = async (playlistIds, maxResults, apiKey) => {
       );
 
       const playlistVideos = [];
-      response.json().items.forEach((item) => {
+      for (const item of response.json().items) {
         const snippet = item.snippet;
 
         // IMPORTANT: Filter out Shorts from playlist videos
@@ -590,6 +626,11 @@ const fetchPlaylistVideos = async (playlistIds, maxResults, apiKey) => {
             thumbnails.default?.url ||
             "";
 
+          // Fetch channel logo - use videoOwnerChannelId for playlist items (video owner, not playlist owner)
+          const videoChannelId = snippet.videoOwnerChannelId || snippet.channelId;
+          const channelLogo = videoChannelId ?
+            await fetchChannelLogo(videoChannelId, apiKey) : "";
+
           playlistVideos.push({
             title: snippet.title,
             videoId: item.contentDetails.videoId,
@@ -598,11 +639,13 @@ const fetchPlaylistVideos = async (playlistIds, maxResults, apiKey) => {
             thumbnail: thumbnail,
             description: snippet.description,
             channelTitle: snippet.channelTitle,
+            channelId: videoChannelId,
+            channelLogo: channelLogo,
             source: "YouTube Playlist",
             playlistId: playlistId,
           });
         }
-      });
+      }
 
       // Store videos for this playlist
       playlistVideosMap.set(playlistId, playlistVideos);
