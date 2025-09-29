@@ -100,7 +100,6 @@ app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
-// Cron job setup (commented out for now)
 let facebookRefreshInterval = null;
 
 // Function to start Facebook refresh interval (data preparation only)
