@@ -95,7 +95,7 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
   }
 
   return (
-    <div className="container max-w-[840px] mx-auto px-4 py-8">
+    <div className="container max-w-[840px] mx-auto px-4 py-4">
       <div className="space-y-0 rounded-2xl overflow-hidden">
         {displayed.map((item, index) => (
           <div
@@ -103,7 +103,7 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
             className="bg-white dark:bg-[#1f2125] px-4 cursor-pointer"
             onClick={() => handleCardClick(item.link)}
           >
-            <div className="border-b border-gray-200 dark:border-gray-700 pt-2 pb-2">
+            <div className="border-b border-[#e3e3e3] dark:border-gray-700 pt-2 pb-2">
               <div className="flex flex-row gap-4">
                 {/* Content */}
                 <div className="flex-1">
@@ -130,7 +130,7 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-38 h-23 object-cover  rounded"
+                      className="w-38 h-23 md:w-50 md:h-28 object-cover  rounded"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
@@ -168,7 +168,7 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                           onCommentToggle(item.link);
                         }}
                         className="px-3 hover:cursor-pointer py-2 text-sm rounded transition   text-black hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700 
-              dark:border-[#292a2d] shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+              dark:border-[#292a2d] dark:bg-[#292a2d] bg-[#f6f8fc]
                         "
                       >
                         {openCommentId === item.link

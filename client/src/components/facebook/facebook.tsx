@@ -283,7 +283,7 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
                     onClick={() => onCommentToggle(post.postId)}
                     className="px-3 hover:cursor-pointer py-2 text-sm rounded transition  text-black hover:bg-gray-200 
                            dark:text-white dark:hover:bg-gray-700 
-               shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+                dark:bg-[#292a2d] bg-[#f6f8fc]
                     "
                   >
                     {openCommentId === post.postId

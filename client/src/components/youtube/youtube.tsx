@@ -271,7 +271,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                 className={` text-[14px] hover:cursor-pointer px-4 py-1 font-[500] rounded-[8px] transition-all duration-200 ${
                   activeTab === type
                     ? "dark:bg-[#004a77] bg-[#c2e7ff] dark:text-[#c2e7ff] text-[#001d35]"
-                    : "bg-transparent hover:bg-[#3a3b3e] dark:text-[#c2c7c5] text-[#444746] border-[1px] border-[#5e5e5e] "
+                    : "bg-transparent hover:bg-[#3a3b3e] hover:text-white dark:text-[#c2c7c5] text-[#444746] border-[1px] border-[#5e5e5e] "
                 } ${tabLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {label}
@@ -290,7 +290,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
         </div>
       )}
 
-      <div className="space-y-0 rounded-2xl  overflow-hidden">
+      <div className="space-y-0 rounded-2xl bg-white dark:bg-[#1f2125] overflow-hidden">
         {loading &&
         !tabLoading &&
         !initialData.channels.videos.length &&
@@ -325,18 +325,18 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                 className="bg-white dark:bg-[#1f2125] px-0 cursor-pointer"
                 onClick={() => handleCardClick(video)}
               >
-                <div className="border-b border-gray-200 dark:border-gray-700 pt-4 pb-2">
+                <div className="border-b border-gray-200 dark:border-gray-700 pb-2 mb-2">
                   {/* Video Player or Thumbnail */}
                   <div className="mb-6">
                     {playingVideoId === video.videoId ? (
                       <div
-                        className="relative w-full h-82 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden"
+                        className="relative w-full aspect-video bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <iframe
                           src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1`}
                           title={video.title}
-                          className="w-full h-full rounded-[16px]"
+                          className="w-full h-full rounded-[16px] object-cover"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
@@ -368,17 +368,17 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                           </div>
                         </div>
                         {/* Play button overlay */}
-                        <div className="absolute inset-0 bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                          <div className="w-20 h-20 bg-white bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <Play className="h-10 w-10 text-black" />
+                        <div className="absolute inset-0  bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center group-hover:scale-105 transition-all duration-200 shadow-lg">
+                            <Play className="h-6 w-6 text-gray-800 ml-1" fill="currentColor" />
                           </div>
                         </div>
                       </div>
                     ) : (
                       <div className="relative w-full h-64 bg-gradient-to-br from-red-500 to-red-600 rounded-[16px] flex items-center justify-center group cursor-pointer hover:shadow-xl transition-all duration-300">
                         <div className="text-center text-white">
-                          <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-3">
-                            <Play className="h-8 w-8" />
+                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg">
+                            <Play className="h-6 w-6 text-gray-800 ml-1" fill="currentColor" />
                           </div>
                           <p className="text-lg font-medium">
                             {video.channelTitle}
@@ -398,8 +398,10 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                             video.channelHandle
                               ? `https://www.youtube.com/@${video.channelHandle}`
                               : video.channelId
-                                ? `https://www.youtube.com/channel/${video.channelId}`
-                                : `https://www.youtube.com/results?search_query=${encodeURIComponent(video.channelTitle)}`
+                              ? `https://www.youtube.com/channel/${video.channelId}`
+                              : `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                                  video.channelTitle
+                                )}`
                           }
                           target="_blank"
                           rel="noopener noreferrer"
@@ -426,71 +428,75 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                               </h3>
                             </a>
                           </div>
-                          <div className="flex text-[#AAAAAA] flex-col gap-1">
-                            <div className="flex items-center rounded gap-2 pt-1 ">
-                              {/* <User className="h-3 w-3 sm:h-4 sm:w-4" /> */}
-                              <a
-                                href={
-                                  video.channelHandle
-                                    ? `https://www.youtube.com/@${video.channelHandle}`
-                                    : video.channelId
+                          <div className="flex text-[#AAAAAA] justify-between gap-1">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center rounded gap-2 pt-1 ">
+                                {/* <User className="h-3 w-3 sm:h-4 sm:w-4" /> */}
+                                <a
+                                  href={
+                                    video.channelHandle
+                                      ? `https://www.youtube.com/@${video.channelHandle}`
+                                      : video.channelId
                                       ? `https://www.youtube.com/channel/${video.channelId}`
-                                      : `https://www.youtube.com/results?search_query=${encodeURIComponent(video.channelTitle)}`
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-xs sm:text-sm font-medium hover:underline hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                              >
-                                {video.channelTitle}
-                              </a>
-                            </div>
-                            <div className="flex items-center gap-2 rounded ">
-                              {/* <Calendar className="h-3 w-3 sm:h-4 sm:w-4" /> */}
-                              <span className="text-xs sm:text-sm sm:font-medium">
-                                {video.publishedAt
-                                  ? formatDistanceToNow(
-                                      new Date(video.publishedAt),
-                                      {
-                                        addSuffix: true,
-                                      }
-                                    )
-                                  : "Unknown date"}
-                              </span>
-                            </div>
-                          </div>
-                          {/* Metadata */}
-                          <div className="flex flex-wrap items-center justify-end gap-4 mt-0 text-sm text-gray-500 dark:text-gray-400">
-                            {/* Right Side - Action Buttons */}
-                            <div className="flex flex-row  gap-3 lg:flex-shrink-0 ">
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                className=""
-                              >
-                                <ShareButton
-                                  url={video.url}
-                                  title={video.title}
-                                />
+                                      : `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                                          video.channelTitle
+                                        )}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs sm:text-sm font-medium hover:underline hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                  {video.channelTitle}
+                                </a>
                               </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCommentToggle(video.videoId);
-                                }}
-                                className="flex-1 lg:flex-none md:px-6 text-sm font-medium rounded  transition-all duration-200   text-black hover:bg-gray-100  dark:text-white dark:hover:bg-gray-700 
+                              <div className="flex items-center gap-2 rounded ">
+                                {/* <Calendar className="h-3 w-3 sm:h-4 sm:w-4" /> */}
+                                <span className="text-xs sm:text-sm sm:font-medium">
+                                  {video.publishedAt
+                                    ? formatDistanceToNow(
+                                        new Date(video.publishedAt),
+                                        {
+                                          addSuffix: true,
+                                        }
+                                      )
+                                    : "Unknown date"}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Metadata */}
+                            <div className="flex mt-2 flex-wrap items-center justify-end gap-4  text-sm text-gray-500 dark:text-gray-400">
+                              {/* Right Side - Action Buttons */}
+                              <div className="flex flex-row  gap-3 lg:flex-shrink-0 ">
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className=""
+                                >
+                                  <ShareButton
+                                    url={video.url}
+                                    title={video.title}
+                                  />
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCommentToggle(video.videoId);
+                                  }}
+                                  className="flex-1 lg:flex-none md:px-6 text-sm font-medium rounded  transition-all duration-200   text-black hover:bg-gray-100  dark:text-white dark:hover:bg-gray-700 
                                 hover:cursor-pointer
-                                hover:shadow-md active:scale-95 shadow-md dark:bg-[#292a2d] bg-[#f6f8fc]
+                                 active:scale-95 dark:bg-[#292a2d] bg-[#f6f8fc]
                                 "
-                              >
-                                <span className="block md:hidden">
-                                  <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                                </span>
-                                <span className="hidden md:block">
-                                  {openCommentId === video.videoId
-                                    ? "Close Comments"
-                                    : "Show Comments"}
-                                </span>
-                              </button>
+                                >
+                                  <span className="block md:hidden">
+                                    <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                                  </span>
+                                  <span className="hidden md:block">
+                                    {openCommentId === video.videoId
+                                      ? "Close Comments"
+                                      : "Show Comments"}
+                                  </span>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>

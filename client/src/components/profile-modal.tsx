@@ -113,7 +113,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         <form className="space-y-5">
           <div className="flex flex-col items-center space-y-3">
-            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-300 dark:border-gray-600">
+            <div className="w-[98px] h-24 rounded-full overflow-hidden border-4 border-gray-300 dark:border-gray-600">
               <Image
                 src={avatarSrc}
                 alt="Profile Avatar"

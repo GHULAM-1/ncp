@@ -638,7 +638,7 @@ const CustomComments: React.FC<CustomCommentsProps> = ({
     <div className="space-y-8 p-3 mt-2 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
       {/* Comment Form */}
       <div className="md:border md:border-gray-200 md:dark:border-gray-700 rounded-xl md:p-6 md:pb-2 pb-0 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200 mb-2">
-        <div className="hidden md:flex items-center gap-4 mb-4">
+        {/* <div className="hidden md:flex items-center gap-4 mb-4">
           <Avatar className="w-10 h-10 ring-2 ring-blue-100 dark:ring-blue-900/30">
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">
               {getInitials(user.name)}
@@ -652,7 +652,7 @@ const CustomComments: React.FC<CustomCommentsProps> = ({
               Share your thoughts with the community
             </p>
           </div>
-        </div>
+        </div> */}
 
         <form onSubmit={handleSubmitComment} className="md:space-y-2 space-y-1">
           <div className="relative">
@@ -715,14 +715,14 @@ const CustomComments: React.FC<CustomCommentsProps> = ({
 
       {/* Comments List */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <h4 className="text-xl font-bold flex items-center gap-3 text-gray-900 dark:text-white">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <MessageSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             Comments ({comments.length})
           </h4>
-        </div>
+        </div> */}
 
         {loading ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">

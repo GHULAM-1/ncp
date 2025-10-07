@@ -202,7 +202,7 @@ export default async function Page() {
   }));
 
   return (
-    <main className="max-w-[840px] mx-auto px-4 py-8">      
+    <main className="max-w-[840px] mx-auto px-4 py-4">      
       <NewsFeed newsItems={newsItems} />
     </main>
   );

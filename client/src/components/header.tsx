@@ -94,7 +94,7 @@ const Header: React.FC = () => {
     <>
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#202124]/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
         <div className="flex justify-between items-center md:px-6 px-1 pt-4">
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href="/" className="flex items-center space-x-1 group">
             <div className="relative">
               <Image
                 src="/Icons/logo.jpeg"
@@ -144,8 +144,7 @@ const Header: React.FC = () => {
                 <div className="p-3">
                   {token && (
                     <div className="px-3 py-2 mb-2">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">Welcome back!</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{username}</p>
+                      <p className="text-xs md:text-base text-gray-500 dark:text-gray-400 truncate">{username}</p>
                     </div>
                   )}
                   

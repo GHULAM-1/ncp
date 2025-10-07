@@ -18,12 +18,13 @@ export function ModeToggle() {
   const isDark = theme === "dark";
 
   return (
-    <div className="flex items-center px-3 py-2">
+    <div className="flex items-center justify-end px-3 py-2">
+      <p className="text-xs text-gray-500 dark:text-gray-400 pr-2">Light</p>
       <button
         onClick={() => setTheme(isDark ? "light" : "dark")}
         className={`relative hover:cursor-pointer w-16 h-8 rounded-full px-1 flex items-center transition-all duration-500 ease-in-out hover:scale-105 active:scale-95 ${
-          isDark 
-            ? "bg-gradient-to-r from-gray-700 to-gray-800 shadow-lg shadow-gray-900/50" 
+          isDark
+            ? "bg-gradient-to-r from-gray-700 to-gray-800 shadow-lg shadow-gray-900/50"
             : "bg-gradient-to-r from-yellow-300 to-yellow-400 shadow-lg shadow-yellow-300/50"
         }`}
         aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
@@ -34,16 +35,17 @@ export function ModeToggle() {
           }`}
         />
         <Sun
-          className={`w-4 h-4 absolute left-1.5 text-yellow-500 transition-all duration-500 ease-in-out ${
+          className={`w-4 h-4 absolute left-2 text-yellow-500 transition-all duration-500 ease-in-out ${
             isDark ? "opacity-0 scale-75" : "opacity-100 scale-100"
           }`}
         />
         <Moon
-          className={`w-4 h-4 absolute right-1.5 text-slate-600 transition-all duration-500 ease-in-out ${
+          className={`w-4 h-4 absolute right-2 text-slate-600 transition-all duration-500 ease-in-out ${
             isDark ? "opacity-100 scale-100" : "opacity-0 scale-75"
           }`}
         />
       </button>
+      <p className="text-xs text-gray-500 dark:text-gray-400 pl-2">Dark</p>
     </div>
   );
 }
