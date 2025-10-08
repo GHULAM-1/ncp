@@ -61,8 +61,8 @@ export default function NewsFeed({ newsItems }: NewsFeedProps) {
   }, [loadMore]);
 
   return (
-    <div className="w-full  rounded-[18px] dark:bg[#292a2d] dark:text-white">
-      <div className="shadow-sm rounded-2xl overflow-hidden bg-gray-50 dark:bg[#292a2d]">
+    <div className="w-full  md:rounded-[18px] dark:bg[#292a2d] dark:text-white">
+      <div className="shadow-sm md:rounded-2xl overflow-hidden bg-white dark:bg-[#1f2125]">
         {displayed.map((item) => {
           // Create consistent post slug for comment identification
           const createPostSlug = (url: string) => {

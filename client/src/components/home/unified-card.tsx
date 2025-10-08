@@ -137,10 +137,10 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
               <span className="text-xs sm:text-sm font-[400] text-[#202124] dark:text-gray-100">
                 {source}
               </span>
-              <h3 className="mt-1 mb-2 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-[#202124] dark:text-gray-100">
+              <h3 className="mt-1 mb-2 leading-6 sm:leading-normal hover:underline text-[18px] lg:text-[20px] font-[400] line-clamp-3 text-[#202124] dark:text-gray-100">
                 {title}
               </h3>
-              <p className="text-[12px] text-[#717478] dark:text-[#c4c7c5]">
+              <p className="text-[12px] hidden md:block text-[#717478] dark:text-[#c4c7c5]">
                 {date
                   ? formatDistanceToNow(new Date(date), { addSuffix: true })
                   : "Unknown date"}
@@ -151,7 +151,7 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
                 <img
                   src={imageUrl}
                   alt={title}
-                  className="w-38 h-23 md:w-50 md:h-28 object-cover rounded"
+                  className="w-[100px] h-[100px] md:w-50 md:h-28 object-cover rounded"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";
@@ -161,7 +161,12 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-end gap-2 text-[#202124] dark:text-gray-100 text-xs sm:text-sm">
+          <div className="mt-3 flex flex-wrap items-center justify-between md:justify-end gap-2 text-[#202124] dark:text-gray-100 text-xs sm:text-sm">
+            <p className="text-[12px] md:hidden block text-[#717478] dark:text-[#c4c7c5]">
+              {date
+                ? formatDistanceToNow(new Date(date), { addSuffix: true })
+                : "Unknown date"}
+            </p>
             <div className="flex items-center gap-2">
               <div className="hidden md:flex items-center gap-2">
                 <div onClick={(e) => e.stopPropagation()}>
@@ -216,32 +221,36 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
   if (platform === "youtube") {
     return (
       <div
-        className="bg-white dark:bg-[#1f2125] px-0 cursor-pointer"
+        className="bg-white dark:bg-[#1f2125] px-0 cursor-pointer rounded-lg overflow-hidden"
         onClick={handleVideoClick}
       >
-        <div className="border-b border-gray-200 dark:border-gray-700 pt-4 pb-2">
+        <div className="border-b border-gray-200 dark:border-gray-700 pt-0 mb-2 pb-2">
           {/* Video Player or Thumbnail */}
           <div className="mb-6">
             {playingVideoId === videoId ? (
               <div
-                className="relative w-full aspect-video bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden"
+                className="relative w-full aspect-video bg-gray-100 dark:bg-gray-700  overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 <iframe
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
                   title={title}
-                  className="w-full h-full rounded-[16px] object-cover"
+                  className="w-full h-full  object-cover"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               </div>
             ) : thumbnail ? (
-              <div className="relative w-full h-82 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
+              <div className="relative w-full bg-gray-100 dark:bg-gray-700 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300" style={{ aspectRatio: '16/9' }}>
                 <img
                   src={thumbnail}
                   alt={title}
-                  className="w-full h-full object-cover transition-transform duration-300"
+                  className="w-full h-full object-cover object-center transition-transform duration-300"
+                  style={{ 
+                    objectPosition: 'center center',
+                    transform: 'scale(1.1)'
+                  }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";
@@ -276,7 +285,7 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
           </div>
 
           {/* Content Layout: Text on Left, Buttons on Right */}
-          <div className="flex flex-col lg:flex-row lg:items-start gap-6 px-4">
+          <div className="flex flex-col gap-4 px-4">
             <div className="flex-1">
               <div className="flex gap-2">
                 <a
@@ -307,13 +316,13 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <h3 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400">
+                      <h3 className="text-[18px] lg:text-[20px] font-bold text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all line-clamp-3 duration-200 hover:text-blue-600 dark:hover:text-blue-400">
                         {title}
                       </h3>
                     </a>
                   </div>
                   <div className="flex text-[#AAAAAA] justify-between gap-1">
-                    <div className="flex flex-row gap-1">
+                    <div className="flex flex-col gap-1">
                       <div className="flex items-center rounded gap-2 pt-1">
                         <a
                           href={
@@ -326,7 +335,7 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="text-xs sm:text-sm font-medium hover:underline hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                          className="text-xs sm:text-sm line-clamp-3 font-medium hover:underline hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                         >
                           {channelTitle}
                         </a>
@@ -563,7 +572,7 @@ const UnifiedCard: React.FC<UnifiedCardProps> = ({
               <span className="text-xs sm:text-sm font-[400] text-gray-700 dark:text-gray-100">
                 {source}
               </span>
-              <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-gray-900 dark:text-gray-100">
+              <h3 className="mt-1 mb-4 sm:mb-0 leading-6 sm:leading-normal hover:underline text-[18px] lg:text-[20px] font-[400] text-gray-900 dark:text-gray-100">
                 {title}
               </h3>
             </div>

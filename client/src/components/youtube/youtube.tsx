@@ -258,7 +258,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
   };
 
   return (
-    <div className="container max-w-[840px] mx-auto pb-8">
+    <div className="w-full md:container md:max-w-[840px] md:mx-auto pb-8">
       {/* Tab Navigation */}
       <div className="flex sticky justify-center">
         <div className="my-2 w-full lg:max-w-[90%]">
@@ -290,7 +290,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
         </div>
       )}
 
-      <div className="space-y-0 rounded-2xl bg-white dark:bg-[#1f2125] overflow-hidden">
+      <div className="space-y-0 bg-white dark:bg-[#1f2125] overflow-hidden">
         {loading &&
         !tabLoading &&
         !initialData.channels.videos.length &&
@@ -322,7 +322,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
             {displayed.map((video, index) => (
               <div
                 key={`${video.videoId}-${index}`}
-                className="bg-white dark:bg-[#1f2125] px-0 cursor-pointer"
+                className="bg-white dark:bg-[#1f2125] px-0 cursor-pointer rounded-lg overflow-hidden"
                 onClick={() => handleCardClick(video)}
               >
                 <div className="border-b border-gray-200 dark:border-gray-700 pb-2 mb-2">
@@ -330,24 +330,28 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                   <div className="mb-6">
                     {playingVideoId === video.videoId ? (
                       <div
-                        className="relative w-full aspect-video bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden"
+                        className="relative w-full aspect-video bg-gray-100 dark:bg-gray-700  overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <iframe
                           src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1`}
                           title={video.title}
-                          className="w-full h-full rounded-[16px] object-cover"
+                          className="w-full h-full  object-cover"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                         />
                       </div>
                     ) : video.thumbnail ? (
-                      <div className="relative w-full h-82 bg-gray-100 dark:bg-gray-700 rounded-[16px] overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
+                      <div className="relative w-full bg-gray-100 dark:bg-gray-700 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300" style={{ aspectRatio: '16/9' }}>
                         <img
                           src={video.thumbnail}
                           alt={video.title}
-                          className="w-full h-full object-cover transition-transform duration-300"
+                          className="w-full h-full object-cover object-center transition-transform duration-300"
+                          style={{ 
+                            objectPosition: 'center center',
+                            transform: 'scale(1.1)'
+                          }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = "none";
@@ -362,7 +366,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-3">
                               <Play className="h-8 w-8" />
                             </div>
-                            <p className="text-lg font-medium">
+                            <p className="text-lg line-clamp-3 font-medium">
                               {video.channelTitle}
                             </p>
                           </div>
@@ -380,7 +384,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg">
                             <Play className="h-6 w-6 text-gray-800 ml-1" fill="currentColor" />
                           </div>
-                          <p className="text-lg font-medium">
+                          <p className="text-lg line-clamp-3 font-medium">
                             {video.channelTitle}
                           </p>
                         </div>
@@ -389,7 +393,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                   </div>
 
                   {/* Content Layout: Text on Left, Buttons on Right */}
-                  <div className="flex flex-col lg:flex-row lg:items-start gap-6 px-4">
+                  <div className="flex flex-col gap-4 px-4">
                     {/* Left Side - Text Content */}
                     <div className="flex-1">
                       <div className="flex gap-2">
@@ -423,7 +427,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <h3 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400">
+                              <h3 className="text-[18px] lg:text-[20px] font-[400] line-clamp-3 text-gray-900 dark:text-gray-100 leading-tight hover:underline cursor-pointer transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400">
                                 {video.title}
                               </h3>
                             </a>
@@ -465,7 +469,7 @@ export default function YouTubeNews({ initialData }: YouTubeNewsProps) {
                               </div>
                             </div>
                             {/* Metadata */}
-                            <div className="flex mt-2 flex-wrap items-center justify-end gap-4  text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex mt-[6px] flex-wrap items-center justify-end gap-4  text-sm text-gray-500 dark:text-gray-400">
                               {/* Right Side - Action Buttons */}
                               <div className="flex flex-row  gap-3 lg:flex-shrink-0 ">
                                 <div

@@ -140,7 +140,7 @@ const CommentItem: React.FC<{
     depth > 0 ? `border-l-2 ${getBorderColor(depth)} pl-4` : "";
 
   return (
-    <div className={`${indentClass} ${isReply ? "mt-3" : "mb-6"}`}>
+    <div className={`${indentClass} ${isReply ? "mt-2" : "mb-2"}`}>
       <div className="flex items-start gap-4">
         <Avatar className="w-10 h-10 flex-shrink-0 ring-2 ring-gray-100 dark:ring-gray-700">
           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">
@@ -149,7 +149,7 @@ const CommentItem: React.FC<{
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-0">
             <span className="font-semibold text-sm text-gray-900 dark:text-white">
               {comment.author}
             </span>
@@ -158,7 +158,7 @@ const CommentItem: React.FC<{
             </span>
           </div>
 
-          <div className="text-sm text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+          <div className="text-sm text-gray-700 dark:text-gray-300 mb-1 leading-relaxed">
             {(() => {
               const shouldShowReadMore =
                 comment.content && comment.content.length > 200;
@@ -240,7 +240,7 @@ const CommentItem: React.FC<{
 
           {/* Reply form */}
           {replyingTo === comment._id && (
-            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700 shadow-sm">
+            <div className="mt-4 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700 shadow-sm">
               <div className="flex items-center gap-3 mb-3">
                 <Avatar className="w-7 h-7 ring-2 ring-blue-200 dark:ring-blue-700">
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-semibold">
@@ -298,8 +298,8 @@ const CommentItem: React.FC<{
 
           {/* Replies */}
           {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-3">
+            <div className="mt-1">
+              <div className="flex items-center justify-between mb-0">
                 <button
                   onClick={() => setShowReplies(!showReplies)}
                   className="flex hover:cursor-pointer items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium"
@@ -635,9 +635,9 @@ const CustomComments: React.FC<CustomCommentsProps> = ({
   }
 
   return (
-    <div className="space-y-8 p-3 mt-2 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+    <div className="space-y-8 p-0 mt-0 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
       {/* Comment Form */}
-      <div className="md:border md:border-gray-200 md:dark:border-gray-700 rounded-xl md:p-6 md:pb-2 pb-0 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200 mb-2">
+      <div className=" rounded-xl md:p-2 md:pb-2 pb-0 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200 mb-2">
         {/* <div className="hidden md:flex items-center gap-4 mb-4">
           <Avatar className="w-10 h-10 ring-2 ring-blue-100 dark:ring-blue-900/30">
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">

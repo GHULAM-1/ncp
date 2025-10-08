@@ -93,7 +93,7 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#202124]/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-        <div className="flex justify-between items-center md:px-6 px-1 pt-4">
+        <div className="flex justify-between items-center md:px-6 px-1 pt-1 md:pt-2">
           <Link href="/" className="flex items-center space-x-1 group">
             <div className="relative">
               <Image
@@ -110,7 +110,7 @@ const Header: React.FC = () => {
             </h1>
           </Link>
           
-          <div className="flex-1 overflow-x-auto scrollbar-hide mx-6">
+          <div className="flex-1 md:overflow-x-auto scrollbar-hide md:mx-6">
             <Navigation />
           </div>
 

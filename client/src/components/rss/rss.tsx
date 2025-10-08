@@ -95,7 +95,7 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
   }
 
   return (
-    <div className="container max-w-[840px] mx-auto px-4 py-4">
+    <div className="container max-w-[840px] mx-auto py-4">
       <div className="space-y-0 rounded-2xl overflow-hidden">
         {displayed.map((item, index) => (
           <div
@@ -112,10 +112,10 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                     {item.source}
                   </span>
 
-                  <h3 className="mt-1 mb-2 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-[#202124] dark:text-gray-100">
+                  <h3 className="mt-1 mb-2 line-clamp-3 leading-6 sm:leading-normal hover:underline text-lg sm:text-xl font-[400] text-[#202124] dark:text-gray-100">
                     {item.title}
                   </h3>
-                  <p className="text-[12px] text-[#717478] dark:text-[#c4c7c5]">
+                  <p className="text-[12px] hidden md:block text-[#717478] dark:text-[#c4c7c5]">
                     {" "}
                     {item.date
                       ? formatDistanceToNow(new Date(item.date), {
@@ -140,22 +140,15 @@ export default function RSSNews({ initialNews }: RSSNewsProps) {
                 )}
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-end gap-2 text-[#202124] dark:text-gray-100 text-xs sm:text-sm">
-                {/* <div className="flex text-[12px] text-[#717478] dark:text-[#c4c7c5] items-center gap-x-2">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    {item.date
-                      ? formatDistanceToNow(new Date(item.date), {
-                          addSuffix: true,
-                        })
-                      : "Unknown date"}
-                  </span>
-                  <span className="hidden md:inline">•</span>
-                  <span className="font-semibold text-[#5a5a5a] dark:text-[#c4c7c5]">
-                    By {item.source}
-                  </span>
-                </div> */}
-
+              <div className="md:mt-3 flex flex-wrap items-center justify-between md:justify-end gap-2 text-[#202124] dark:text-gray-100 text-xs sm:text-sm">
+                <p className="text-[12px] md:hidden block text-[#717478] dark:text-[#c4c7c5]">
+                  {" "}
+                  {item.date
+                    ? formatDistanceToNow(new Date(item.date), {
+                        addSuffix: true,
+                      })
+                    : "Unknown date"}
+                </p>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2">
                     <div className="hidden md:flex items-center gap-2">

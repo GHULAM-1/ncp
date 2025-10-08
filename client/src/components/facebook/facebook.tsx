@@ -120,7 +120,7 @@ export default function FacebookNews({ initialData }: FacebookNewsProps) {
   }
 
   return (
-    <div className="container max-w-[840px] mx-auto px-4 py-8">
+    <div className="container max-w-[840px] mx-auto py-8">
       <div className="space-y-0 rounded-2xl overflow-hidden">
         {posts.map((post, index) => (
           <div
